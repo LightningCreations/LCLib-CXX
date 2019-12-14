@@ -1,0 +1,84 @@
+
+CC = @CC@
+CXX = @CXX@
+AR = @AR@
+CPPFLAGS = @CPPFLAGS@
+CFLAGS = @CFLAGS@
+CXXFLAGS = @CXXFLAGS@
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+
+TARGETS =
+
+ifeq (@lclib_cxx_build_shared@,yes)
+TARGETS += shared
+endif
+
+ifeq (@lclib_cxx_build_static@,yes)
+TARGETS += static
+endif
+
+INSTALL_TARGETS = $(foreach target,$(TARGETS),install-$(target))
+
+SRCDIR = @srcdir@
+BUILDDIR = @builddir@
+OUTDIR = $(BUILDDIR)/out
+
+INCLUDES = $(SRCDIR)/include
+LIBDIRS =
+LIBRARIES = m
+
+CDIALECT = c11
+CXXDIALECT = c++17
+
+ALL_CPPFLAGS = -pthread $(foreach include,$(INCLUDES),-I$(include))
+ALL_CFLAGS = -std=$(CDIALECT) $(CFLAGS)
+ALL_CXXFLAGS = -std=$(CXXDIALECT) $(CXXFLAGS)
+ALL_LDFLAGS = -pthread $(foreach libdir,$(LIBDIRS),-L$(libdir)) $(LDFLAGS)
+
+prefix = @prefix@
+
+OUTPUT = liblc-c++.so
+ARCHIVE_OUTPUT = liblc-c++.a
+OBJECTS = $(OUTDIR)/Main.o
+
+all: $(TARGETS)
+
+shared: $(OUTPUT)
+
+static: $(ARCHIVE_OUTPUT)
+
+$(OUTPUT): $(OBJECTS) | Makefile
+	$(CXX) $(ALL_LDFLAGS) -o $@ $^ $(foreach library,$(LIBRARIES),-l$(library))
+
+$(ARCHIVE_OUTPUT): $(OBJECTS) | Makefile
+	ar rcs $@ $^
+
+Makefile: $(SRCDIR)/Makefile.in config.status
+	./config.status Makefile
+
+config.status: $(SRCDIR)/configure
+	./config.status --recheck
+
+$(SRCDIR)/configure: $(SRCDIR)/configure.ac
+	autoreconf $(SRCDIR)
+
+$(OUTDIR)/:
+	mkdir $(OUTDIR)
+
+$(OUTDIR)/%.o: $(SRCDIR)/src/%.cpp | $(OUTDIR)/
+	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -c -o $@ $^
+
+$(OUTDIR)/%.o: $(SRCDIR)/src/%.c | $(OUTDIR)/
+	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c -o $@ $^
+
+clean:
+	rm -rf $(OUTPUT) $(OUTDIR)/
+
+distclean: clean
+	rm -f Makefile config.status config.log
+
+install: install-headers install-shared install-static
+
+
+	
