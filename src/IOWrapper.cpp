@@ -41,4 +41,52 @@ namespace lightningcreations::lclib::io{
 
     }
 
+    FileInputStream::FileInputStream(const char* name): file{std::fopen(name,"rb")}{}
+
+    FileInputStream::FileInputStream(const std::filesystem::path& p)
+        : FileInputStream{p.u8string()}{}
+
+    FileInputStream::~FileInputStream(){
+        if(file)
+            std::fclose(file);
+    }
+
+    std::size_t FileInputStream::read(void* v,std::size_t sz){
+        return std::fread(v,1,sz,file);
+    }
+    int FileInputStream::read(){
+        unsigned char val;
+        if(!std::fread(&val,1,1,file))
+            return -1;
+        else
+            return val&0xff;
+    }
+
+    [[nodiscard]] bool FileInputStream::check_error()const noexcept{
+        return std::ferror(file)||std::feof(file);
+    }
+
+    void FileInputStream::clear_error() noexcept{
+        std::clearerr(file);
+    }
+
+    FileInputStream::FileInputStream(FileInputStream&& rhs) : file{std::exchange(rhs.file,nullptr)}{}
+    FileInputStream& FileInputStream::operator=(FileInputStream&& rhs) {
+        std::swap(file,rhs.file);
+    }
+
+    FilterInputStream::FilterInputStream(InputStream& in):wrapped{&in}{}
+    std::size_t FilterInputStream::read(void* v,std::size_t sz){
+        return wrapped->read(v,sz);
+    }
+    int FilterInputStream::read(){
+        return wrapped->read();
+    }
+    [[nodiscard]] bool FilterInputStream::check_error()const noexcept{
+        return wrapped->check_error();
+    }
+    void FilterInputStream::clear_error(){
+        return wrapped->clear_error();
+    }
+
 }

@@ -1,4 +1,4 @@
-AC_INIT([TBB-Community-Game], [1.0], [])
+AC_INIT([LCLib-CXX], [1.0], [])
 
 
 AC_CANONICAL_TARGET

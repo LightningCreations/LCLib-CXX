@@ -57,12 +57,37 @@ namespace lightningcreations::lclib::io{
         template<typename CharTraits,typename Allocator> explicit FileInputStream(const std::basic_string<char,CharTraits,Allocator>& name)
             :FileInputStream(name.c_str()){}
         explicit FileInputStream(const std::filesystem::path&);
+        FileInputStream(FileInputStream&&);
+        FileInputStream& operator=(FileInputStream&&);
         ~FileInputStream();
         std::size_t read(void*,std::size_t);
         int read();
-        bool check_error()const noexcept;
-        void clear_error()const noexcept;
+        [[nodiscard]] bool check_error()const noexcept;
+        void clear_error()noexcept;
+    };
+    class FilterInputStream{
+    private:
+        InputStream* wrapped;
+    public:
+        FilterInputStream(InputStream&);
+        std::size_t read(void*,std::size_t);
+        int read();
+        [[nodiscard]] bool check_error()const noexcept;
+        void clear_error();
+    };
 
+    class OutputStream{
+    public:
+        static void* operator new(std::size_t)=delete;
+        static void operator delete(void*)=delete;
+        OutputStream(const OutputStream&)=delete;
+        OutputStream& operator=(const OutputStream&)=default;
+    protected:
+        ~OutputStream()=default;
+        OutputStream()=default;
+    public:
+        OutputStream(OutputStream&&)=default;
+        OutputStream& operator=()
     };
 }
 

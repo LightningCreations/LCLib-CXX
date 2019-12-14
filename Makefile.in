@@ -18,6 +18,11 @@ ifeq (@lclib_cxx_build_static@,yes)
 TARGETS += static
 endif
 
+ifeq ($(TARGETS),)
+$(error Must configure with at least one target. Reconfigure without either --disable-shared or --disable-static)
+endif
+
+
 INSTALL_TARGETS = $(foreach target,$(TARGETS),install-$(target))
 
 SRCDIR = @srcdir@
@@ -31,16 +36,16 @@ LIBRARIES = m
 CDIALECT = c11
 CXXDIALECT = c++17
 
-ALL_CPPFLAGS = -pthread $(foreach include,$(INCLUDES),-I$(include))
+ALL_CPPFLAGS = -pthread $(foreach include,$(INCLUDES),-I$(include)) -fPIC
 ALL_CFLAGS = -std=$(CDIALECT) $(CFLAGS)
 ALL_CXXFLAGS = -std=$(CXXDIALECT) $(CXXFLAGS)
-ALL_LDFLAGS = -pthread $(foreach libdir,$(LIBDIRS),-L$(libdir)) $(LDFLAGS)
+ALL_LDFLAGS = -pthread -shared $(foreach libdir,$(LIBDIRS),-L$(libdir)) $(LDFLAGS)
 
 prefix = @prefix@
 
 OUTPUT = liblc-c++.so
 ARCHIVE_OUTPUT = liblc-c++.a
-OBJECTS = $(OUTDIR)/Main.o
+OBJECTS = $(OUTDIR)/IOWrapper.o
 
 all: $(TARGETS)
 
@@ -78,7 +83,20 @@ clean:
 distclean: clean
 	rm -f Makefile config.status config.log
 
-install: install-headers install-shared install-static
+distclean: clean
+	rm -f Makefile config.status config.log
+
+install: install-headers $(INSTALL_TARGETS)
+
+install-headers:
+	$(INSTALL) -m755 @srcdir@/include/* @includedir@
+
+install-shared: $(OUTPUT)
+	$(INSTALL) -m644 $(OUTPUT) @libdir@
+
+install-static: $(ARCHIVE_OUTPUT)
+	$(INSTALL) -m644 $(ARCHIVE_OUTPUT) @libdir@
+
 
 
 	
