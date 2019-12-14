@@ -73,6 +73,7 @@ namespace lightningcreations::lclib::io{
     FileInputStream::FileInputStream(FileInputStream&& rhs) : file{std::exchange(rhs.file,nullptr)}{}
     FileInputStream& FileInputStream::operator=(FileInputStream&& rhs) {
         std::swap(file,rhs.file);
+        return *this;
     }
 
     FilterInputStream::FilterInputStream(InputStream& in):wrapped{&in}{}
@@ -88,5 +89,55 @@ namespace lightningcreations::lclib::io{
     void FilterInputStream::clear_error(){
         return wrapped->clear_error();
     }
-
+    OutputStream::operator bool()const noexcept{
+        return !this->check_error();
+    }
+    bool OutputStream::operator!()const noexcept{
+        return this->check_error();
+    }
+    void OutputStream::flush(){}
+    
+    FileOutputStream::FileOutputStream(FILE* file):file{file}{}
+    explicit FileOutputStream::FileOutputStream(const char* name):file{std::fopen(name,"wb")}{}
+    explicit FileOutputStream::FileOutputStream(const char* name,open_append_t):file{std::fopen(name,"ab")}{}
+    std::size_t FileOutputStream::write(const void* v,std::size_t sz){
+        return std::fwrite(v,1,sz,file);
+    }
+    void FileOutputStream::write(std::uint8_t u){
+        std::fwrite(&u,1,1,file);
+    }
+    [[nodiscard]] bool FileOutputStream::check_error()const noexcept{
+        return std::ferror(file)||std::feof(
+    }
+    void FileOutputStream::clear_error()noexcept{
+        std::clearerr(file);
+    }
+    void FileOutputStream::flush(){
+        std::fflush(file);
+    }
+    FileOutputStream::~FileOutputStream(){
+        if(file)
+            std::fclose(file);
+    }
+    FileOutputStream::FileOutputStream(FileOutputStream&& stream):file{std::exchange(stream.file,nullptr)}{}
+    FileOutputStream& FileOutputStream::operator=(FileOutputStream&& stream){
+        std::swap(file,stream.file);
+        return *this;
+    }
+    FilterOutputStream::FilterOutputStream(OutputStream& wrapped):wrapped{&wrapped}{}
+    std::size_t FilterOutputStream::write(const void* v,std::size_t sz){
+        return wrapped->write(v,sz);
+    }
+    void FilterOutputStream::write(std::uint8_t byte){
+        return wrapped->write(byte);
+    }
+    [[nodiscard] bool FilterOutputStream::check_error()const noexcept{
+        return wrapped->check_error();
+    }
+    void FilterOutputStream::clear_error()noexcept{
+        wrapped->clear_error();
+    }
+    void FilterOutputStream::flush(){
+        wrapped->flush();
+    }
 }
