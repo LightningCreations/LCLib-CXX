@@ -65,8 +65,6 @@ Makefile: $(SRCDIR)/Makefile.in config.status
 config.status: $(SRCDIR)/configure
 	./config.status --recheck
 
-$(SRCDIR)/configure: $(SRCDIR)/configure.ac
-	autoreconf $(SRCDIR)
 
 $(OUTDIR)/:
 	mkdir $(OUTDIR)
