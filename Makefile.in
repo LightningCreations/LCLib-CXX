@@ -36,9 +36,9 @@ LIBRARIES = m
 CDIALECT = c11
 CXXDIALECT = c++17
 
-ALL_CPPFLAGS = -pthread $(foreach include,$(INCLUDES),-I$(include)) -fPIC
-ALL_CFLAGS = -std=$(CDIALECT) $(CFLAGS)
-ALL_CXXFLAGS = -std=$(CXXDIALECT) $(CXXFLAGS)
+ALL_CPPFLAGS = -pthread $(foreach include,$(INCLUDES),-I$(include))
+ALL_CFLAGS = -std=$(CDIALECT) $(CFLAGS) -fPIC
+ALL_CXXFLAGS = -std=$(CXXDIALECT) $(CXXFLAGS) -fPIC
 ALL_LDFLAGS = -pthread -shared $(foreach libdir,$(LIBDIRS),-L$(libdir)) $(LDFLAGS)
 
 prefix = @prefix@
