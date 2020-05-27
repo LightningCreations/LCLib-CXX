@@ -21,12 +21,9 @@ namespace lightningcreations::lclib::time{
         seconds_t seconds;
         nanos_t nanos;
     public:
-
         Duration()=default;
         ~Duration()=default;
-        constexpr explicit Duration(seconds_t s,nanos_t nanos=0):seconds{s},nanos{nanos}{
-
-        }
+        constexpr explicit Duration(seconds_t s,nanos_t nanos=0):seconds{s},nanos{nanos}{}
         constexpr Duration(const seconds_duration& dur):seconds{dur.count()},nanos{}{}
 
 

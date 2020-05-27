@@ -25,7 +25,7 @@
 
 
 namespace lightningcreations::lclib::io{
-    std::size_t eof(-1);
+    inline const std::size_t eof(-1);
     class IOException:public std::runtime_error{
     public:
         using runtime_error::runtime_error;
