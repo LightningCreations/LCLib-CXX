@@ -86,7 +86,7 @@ namespace lightningcreations::lclib::io{
     [[nodiscard]] bool FilterInputStream::check_error()const noexcept{
         return wrapped->check_error();
     }
-    void FilterInputStream::clear_error(){
+    void FilterInputStream::clear_error()noexcept{
         return wrapped->clear_error();
     }
     OutputStream::operator bool()const noexcept{
@@ -98,8 +98,8 @@ namespace lightningcreations::lclib::io{
     void OutputStream::flush(){}
     
     FileOutputStream::FileOutputStream(FILE* file):file{file}{}
-    explicit FileOutputStream::FileOutputStream(const char* name):file{std::fopen(name,"wb")}{}
-    explicit FileOutputStream::FileOutputStream(const char* name,open_append_t):file{std::fopen(name,"ab")}{}
+    FileOutputStream::FileOutputStream(const char* name):file{std::fopen(name,"wb")}{}
+    FileOutputStream::FileOutputStream(const char* name,open_append_t):file{std::fopen(name,"ab")}{}
     std::size_t FileOutputStream::write(const void* v,std::size_t sz){
         return std::fwrite(v,1,sz,file);
     }
@@ -107,7 +107,7 @@ namespace lightningcreations::lclib::io{
         std::fwrite(&u,1,1,file);
     }
     [[nodiscard]] bool FileOutputStream::check_error()const noexcept{
-        return std::ferror(file)||std::feof(
+        return std::ferror(file)||std::feof(file);
     }
     void FileOutputStream::clear_error()noexcept{
         std::clearerr(file);
@@ -119,8 +119,8 @@ namespace lightningcreations::lclib::io{
         if(file)
             std::fclose(file);
     }
-    FileOutputStream::FileOutputStream(FileOutputStream&& stream):file{std::exchange(stream.file,nullptr)}{}
-    FileOutputStream& FileOutputStream::operator=(FileOutputStream&& stream){
+    FileOutputStream::FileOutputStream(FileOutputStream&& stream)noexcept:file{std::exchange(stream.file,nullptr)}{}
+    FileOutputStream& FileOutputStream::operator=(FileOutputStream&& stream)noexcept{
         std::swap(file,stream.file);
         return *this;
     }
@@ -131,7 +131,7 @@ namespace lightningcreations::lclib::io{
     void FilterOutputStream::write(std::uint8_t byte){
         return wrapped->write(byte);
     }
-    [[nodiscard] bool FilterOutputStream::check_error()const noexcept{
+    [[nodiscard]] bool FilterOutputStream::check_error()const noexcept{
         return wrapped->check_error();
     }
     void FilterOutputStream::clear_error()noexcept{
@@ -139,5 +139,30 @@ namespace lightningcreations::lclib::io{
     }
     void FilterOutputStream::flush(){
         wrapped->flush();
+    }
+
+    DataInputStream::DataInputStream(InputStream& in,endianness e):FilterInputStream(in),byteorder{e}{}
+    endianness DataInputStream::getEndianness()const{
+        return this->byteorder;
+    }
+    void DataInputStream::setEndianness(endianness e){
+        this->byteorder = e;
+    }
+    void DataInputStream::readFully(void* v,std::size_t sz){
+        if(this->read(v,sz)!=sz)
+            throw EOFException{"File reached EOF before finishing readFully"};
+    }
+    uint8_t DataInputStream::readSingle(){
+        uint8_t byte{};
+        readFully(&byte,1);
+        return byte;
+    }
+
+    DataOutputStream::DataOutputStream(OutputStream& out,endianness byteorder):FilterOutputStream{out},byteorder{byteorder}{}
+    endianness DataOutputStream::getEndianness()const noexcept{
+        return this->byteorder;
+    }
+    void DataOutputStream::setEndianness(endianness endian)noexcept{
+        this->byteorder = endian;
     }
 }

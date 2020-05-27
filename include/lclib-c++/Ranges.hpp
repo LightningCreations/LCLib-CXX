@@ -13,7 +13,7 @@
 namespace lightningcreations::lclib::ranges{
     template<typename T> struct numeric_range{
         static_assert(std::is_trivially_copyable_v<T>,"T must be trivially copyable");
-        static_assert(std::numeric_limits<T>::is_integer(),"T must satisfy IntegerType");
+        static_assert(std::numeric_limits<T>::is_integer(),"T must satisfy IntegerNumeric");
         using difference_type = type_traits::conditional_substitute_t<std::is_unsigned_v<T>,std::make_signed_t,type_traits::type_identity_t,std::conditional_t<std::numeric_limits<T>::is_signed(),T,std::ptrdiff_t>>;
 
     private:
@@ -30,7 +30,7 @@ namespace lightningcreations::lclib::ranges{
             using difference_type = numeric_range::difference_type;
             using iterator_category = std::random_access_iterator_tag;
 
-            constexpr iterator(T val)noexcept(std::is_nothrow_copy_constructible_v<T>):val{val}{}
+            constexpr explicit iterator(T val)noexcept(std::is_nothrow_copy_constructible_v<T>):val{val}{}
 
             constexpr T operator*()const noexcept(std::is_nothrow_copy_constructible_v<T>){
                 return val;

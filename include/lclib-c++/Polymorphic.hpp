@@ -34,15 +34,15 @@ namespace lightningcreations::lclib::polymorphic{
         }
         PolymorphicWrapper(PolymorphicWrapper&& w) noexcept:m_ptr{std::exchange(w.m_ptr,nullptr)}{}
         PolymorphicWrapper(const PolymorphicWrapper&)=delete;
-        template<typename U,std::enable_if_t<std::is_copy_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t))&&!lightningcreations::lclib::type_traits::is_specialization<PolymorphicWrapper,U>&&!std::is_specialization<std::in_place_type,U>>* =0>
+        template<typename U,std::enable_if_t<std::is_copy_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t))&&!lightningcreations::lclib::type_traits::is_specialization_v<PolymorphicWrapper,U>&&!lightningcreations::lclib::type_traits::is_specialization_v<std::in_place_type_t,U>>* =0>
             PolymorphicWrapper(const U& u) noexcept(std::is_nothrow_copy_constructible_v<U>)
             :m_ptr{new(std::nothrow) U{u}}{}
-        template<typename U,std::enable_if_t<!(std::is_copy_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t)))&&!lightningcreations::lclib::type_traits::is_specialization<PolymorphicWrapper,U>&&!std::is_specialization<std::in_place_type,U>>* =0>
+        template<typename U,std::enable_if_t<!(std::is_copy_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t)))&&!lightningcreations::lclib::type_traits::is_specialization_v<PolymorphicWrapper,U>&&!lightningcreations::lclib::type_traits::is_specialization_v<std::in_place_type_t,U>>* =0>
             PolymorphicWrapper(const U& u)=delete;
-        template<typename U,std::enable_if_t<std::is_move_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t))&&!lightningcreations::lclib::type_traits::is_specialization<PolymorphicWrapper,U>&&!std::is_specialization<std::in_place_type,U>>* =0>
+        template<typename U,std::enable_if_t<std::is_move_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t))&&!lightningcreations::lclib::type_traits::is_specialization_v<PolymorphicWrapper,U>&&!lightningcreations::lclib::type_traits::is_specialization_v<std::in_place_type_t,U>>* =0>
         PolymorphicWrapper(U&& u) noexcept(std::is_nothrow_move_constructible_v<U>)
                 :m_ptr{new(std::nothrow) U{std::move(u)}}{}
-        template<typename U,std::enable_if_t<!(std::is_move_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t)))&&!std::is_specialization<PolymorphicWrapper,U>&&!std::is_specialization<std::in_place_type,U>>* =0>
+        template<typename U,std::enable_if_t<!(std::is_move_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t)))&&!lightningcreations::lclib::type_traits::is_specialization_v<PolymorphicWrapper,U>&&!lightningcreations::lclib::type_traits::is_specialization_v<std::in_place_type_t,U>>* =0>
             PolymorphicWrapper(U&& u)=delete;
         template<typename U,std::enable_if_t<std::is_base_of_v<T,U>>* =0>
             constexpr PolymorphicWrapper(PolymorphicWrapper<U>&& w) noexcept:m_ptr{std::exchange(w.m_ptr,nullptr)}{}
@@ -62,7 +62,7 @@ namespace lightningcreations::lclib::polymorphic{
                     throw std::bad_cast{};
             }
 
-        template<typename U,typename... Args,std::enable_if_t<std::is_base_of_v<T,U>&&std::is_constructible_v<U,Args&&...>&&(alignof(U)<=alignof(std::max_align_t))&&!std::is_specialization<PolymorphicWrapper,U>>* = 0>
+        template<typename U,typename... Args,std::enable_if_t<std::is_base_of_v<T,U>&&std::is_constructible_v<U,Args&&...>&&(alignof(U)<=alignof(std::max_align_t))&&!lightningcreations::lclib::type_traits::is_specialization_v<PolymorphicWrapper,U>>* = 0>
             explicit PolymorphicWrapper(std::in_place_type_t<U>,Args&&... args) noexcept(std::is_nothrow_constructible_v<U,Args&&...>)
                 :m_ptr{new(std::nothrow) U(std::forward<Args>(args)...)}{}
 
@@ -87,11 +87,14 @@ namespace lightningcreations::lclib::polymorphic{
         T& operator*()&{
             return *m_ptr;
         }
-        const T&operator*()const{
+        const T& operator*()const&{
             return *m_ptr;
         }
         T&& operator *()&&{
             return static_cast<T&&>(*m_ptr);
+        }
+        const T&& operator*()const&&{
+            return static_cast<const T&&>(*m_ptr);
         }
 
         //So are these

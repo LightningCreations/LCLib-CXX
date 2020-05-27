@@ -5,17 +5,8 @@
 #include <cstddef>
 
 namespace lightningcreations::lclib::type_traits{
-    template<bool b,template<typename...> typename if_true,template<typename...> typename if_false,typename... Ts>
-        struct conditional_substitute {
-            using type = if_true<Ts...>;
-        };
-    template<template<typename...> typename if_true,template<typename...> typename if_false,typename... Ts>
-    struct conditional_substitute<false,if_true,if_false,Ts...> {
-        using type = if_false<Ts...>;
-    };
 
-    template<bool b,template<typename...> typename if_true,template<typename...> typename if_false,typename... Ts> using conditional_substitute_t =
-            typename conditional_substitute<b,if_true,if_false,Ts...>::type;
+    struct empty{};
 
     template<typename T> struct type_identity{
         typedef T type;
@@ -23,8 +14,60 @@ namespace lightningcreations::lclib::type_traits{
 
     template<typename T> using type_identity_t = typename type_identity<T>::type;
 
-    template<typename... Ts> using always_false = std::false_type;
-    template<typename... Ts> using always_true = std::true_type;
+    namespace _detail{
+        template<template<typename...> typename to_instantiate,typename... Ts>
+            auto check_instantiate(std::void_t<to_instantiate<Ts...>>*) -> type_identity<to_instantiate<Ts...>>;
+
+        template<template<typename...> typename to_instantiate,typename... Ts>
+            auto check_instantiate(...) -> empty;
+
+        template<template<typename...> typename to_instantiate,typename... Ts>
+            using checked_instantiate = decltype(check_instantiate<to_instantiate,Ts...>(nullptr));
+    }
+
+    template<bool b,template<typename...> typename if_true,template<typename...> typename if_false,typename... Ts>
+        struct conditional_substitute : _detail::checked_instantiate<if_true,Ts...> {};
+    template<template<typename...> typename if_true,template<typename...> typename if_false,typename... Ts>
+    struct conditional_substitute<false,if_true,if_false,Ts...> : _detail::checked_instantiate<if_false,Ts...> {};
+
+    template<bool b,template<typename...> typename if_true,template<typename...> typename if_false,typename... Ts> using conditional_substitute_t =
+            typename conditional_substitute<b,if_true,if_false,Ts...>::type;
+
+
+
+    template<auto val> using auto_constant = std::integral_constant<decltype(val),val>;
+
+    template<typename...> using always_false = std::false_type;
+    template<typename...> using always_true = std::true_type;
+
+    namespace _detail {
+        template <class Default, class AlwaysVoid,
+                template<class...> class Op, class... Args>
+        struct detector {
+            using value_t = std::false_type;
+            using type = Default;
+        };
+
+        template <class Default, template<class...> class Op, class... Args>
+        struct detector<Default, std::void_t<Op<Args...>>, Op, Args...> {
+            using value_t = std::true_type;
+            using type = Op<Args...>;
+        };
+
+    } // namespace _detail
+    struct nonesuch {
+        ~nonesuch() = delete;
+        nonesuch(nonesuch const&) = delete;
+        void operator=(nonesuch const&) = delete;
+    };
+    template <template<class...> class Op, class... Args>
+    using is_detected = typename _detail::detector<nonesuch, void, Op, Args...>::value_t;
+
+    template <template<class...> class Op, class... Args>
+    using detected_t = typename _detail::detector<nonesuch, void, Op, Args...>::type;
+
+    template <class Default, template<class...> class Op, class... Args>
+    using detected_or = _detail::detector<Default, void, Op, Args...>;
 
     template<typename... Ts> struct has_common_type : std::false_type{};
 
@@ -47,7 +90,7 @@ namespace lightningcreations::lclib::type_traits{
 
 
 
-    template<> struct has_common_type<> : std::false_type{};
+    template<> struct has_common_type<> : std::true_type{};
     template<typename T> struct has_common_type<T> : std::true_type{};
     template<typename T,typename U> struct has_common_type<T,U> : std::conjunction<
             conditional_substitute_t<_detail::check_has_common_type_t<T,U>::value,_detail::sub_same_common_type,always_false,T,U>,

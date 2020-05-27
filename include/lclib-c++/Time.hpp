@@ -5,7 +5,7 @@
 #include <cstdint>
 
 #include <lclib-c++/TypeTraits.hpp>
-
+#include <lclib-c++/IOWrapper.hpp>
 
 namespace lightningcreations::lclib::time{
     using instant_clock = std::chrono::system_clock;
@@ -29,6 +29,7 @@ namespace lightningcreations::lclib::time{
         }
         constexpr Duration(const seconds_duration& dur):seconds{dur.count()},nanos{}{}
 
+
     };
 
 
@@ -39,7 +40,6 @@ namespace std{
         constexpr static bool is_specialized{true};
         constexpr static bool is_signed{true};
         constexpr static bool is_integer{false};
-
     };
 }
 

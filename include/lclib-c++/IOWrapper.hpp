@@ -13,15 +13,16 @@
 #include <type_traits>
 #include <lclib-c++/TypeTraits.hpp>
 #include <array>
+#include <cstring>
 
-#if __cplusplus>201703L
-# ifdef __has_include
-#  if __has_include(<span>)
-#    include <span>
-#    define LCLIB_CXX_HAS_SPAN
-#  endif
-# endif
+
+
+#include <lclib-c++/Config.hpp>
+
+#ifdef LCLIB_CXX_HAS_SPAN
+# include <span>
 #endif
+
 
 namespace lightningcreations::lclib::io{
     std::size_t eof(-1);
@@ -107,10 +108,10 @@ namespace lightningcreations::lclib::io{
         InputStream* wrapped;
     public:
         FilterInputStream(InputStream&);
-        std::size_t read(void*,std::size_t);
-        int read();
-        [[nodiscard]] bool check_error()const noexcept;
-        void clear_error();
+        std::size_t read(void*,std::size_t) override;
+        int read() override;
+        [[nodiscard]] bool check_error()const noexcept override;
+        void clear_error()noexcept override;
     };
 
     class OutputStream{
@@ -151,58 +152,144 @@ namespace lightningcreations::lclib::io{
         constexpr explicit open_append_t()=default;
     };
     constexpr inline open_append_t open_append{};
-    class FileOutputStream:public OutputStream{
+    class FileOutputStream final:public OutputStream{
     private:
         FILE* file;
     public:
-        FileOutputStream(FILE* file);
-        explicit FileOutputStream(const char* name):
+        explicit FileOutputStream(FILE* file);
+        explicit FileOutputStream(const char* name);
         explicit FileOutputStream(const char* name,open_append_t);
         template<typename CharTraits,typename Allocator>
             explicit FileOutputStream(const std::basic_string<char,CharTraits,Allocator>& str):FileOutputStream{str.c_str()}{}
         template<typename CharTraits,typename Allocator>
             explicit FileOutputStream(const std::basic_string<char,CharTraits,Allocator>& str,open_append_t): FileOutputStream{str.c_str(),open_append}{}
-        FileOutputStream(FileOutputStream&&);
-        FileOutputStream& operator=(FileOutputStream&&);
+        FileOutputStream(FileOutputStream&&)noexcept;
+        FileOutputStream& operator=(FileOutputStream&&)noexcept;
         ~FileOutputStream();
-        std::size_t write(const void*,std::size_t);
-        void write(std::uint8_t);
-        [[nodiscard]] bool check_error()const noexcept;
-        void clear_error()noexcept;
-        void flush();
+        std::size_t write(const void*,std::size_t) override;
+        void write(std::uint8_t) override;
+        [[nodiscard]] bool check_error()const noexcept override;
+        void clear_error()noexcept override;
+        void flush() override;
     };
     class FilterOutputStream:public OutputStream{
     private:
         OutputStream* wrapped;
+    protected:
+        ~FilterOutputStream()=default;
     public:
-        FilterOutputStream(OutputStream&);
-        std::size_t write(const void*,std::size_t);
-        void write(std::uint8_t);
-        [[nodiscard] bool check_error()const noexcept;
-        void clear_error()noexcept;
-        void flush();
+        explicit FilterOutputStream(OutputStream&);
+        std::size_t write(const void*,std::size_t) override;
+        void write(std::uint8_t)override;
+        [[nodiscard]] bool check_error()const noexcept override;
+        void clear_error()noexcept override;
+        void flush() override;
     };
     
     enum class endianness{
-        big = 1,
-        little = 2
+        big = LCLIB_CXX_ORDER_BIG,
+        little = LCLIB_CXX_ORDER_LITTLE,
+        native = LCLIB_CXX_BYTE_ORDER
     };
-    class DataInputStream:public FilterInputStream{
+
+    constexpr bool operator==(endianness e1,endianness e2){
+        return static_cast<int>(e1)==static_cast<int>(e2);
+    }
+
+    template<std::size_t N> static void swap_bytes(std::byte(&bytes)[N]){
+        for(std::size_t i = 0;i<N/2;i++)
+            std::swap(bytes[i],bytes[N-i-1]);
+    }
+
+    class DataInputStream final:public FilterInputStream{
     private:
         endianness byteorder;
+
     public:
         explicit DataInputStream(InputStream&,endianness=endianness::big);
+        [[nodiscard]] endianness getEndianness()const;
         void setEndianness(endianness);
         void readFully(void*,std::size_t);
         uint8_t readSingle();
-        uint8_t read_u8();
-        int8_t read_i8();
-        int16_t read_i16();
-        uint16_t read_u16();
-        int32_t read_i32();
-        uint32_t read_u32();
-        int64_t read_i64();
-        
+        using FilterInputStream::read;
+        template<typename T,
+                std::void_t<decltype(std::declval<DataInputStream&>() >> std::declval<T&>()),std::enable_if_t<std::is_default_constructible_v<T>>>* =nullptr>
+            T read(){
+                T val;
+                *this >> val;
+                return std::move(val);
+            };
+
+        template<typename T,std::enable_if_t<std::is_integral_v<T>||std::is_enum_v<T>||(std::is_floating_point_v<T>&&std::numeric_limits<T>::is_iec559)>* =nullptr>
+            friend DataInputStream& operator>>(DataInputStream& in,T& t){
+                if constexpr(std::is_same_v<T,bool>){
+                    auto v{in.readSingle()};
+                    if(v>1)
+                        throw IOException{"Invalid bool value"};
+                    t = bool(v);
+                }else if constexpr(sizeof(T)==1/* && !std::is_same_v<T,bool> */){
+                    reinterpret_cast<uint8_t&>(t) = in.readSingle();
+                }else{
+                    std::byte storage[sizeof(T)];
+                    in.readFully(&storage,sizeof(T));
+                    if(in.byteorder!=endianness::native)
+                        swap_bytes(storage);
+                    memcpy(&t,&storage,sizeof(T));
+                }
+                return in;
+            }
+
+        template<typename T,std::size_t N,decltype(std::declval<DataInputStream&>() >> std::declval<T&>())* =nullptr>
+           friend DataInputStream& operator>>(DataInputStream& in,T(&arr)[N]){
+               if constexpr(sizeof(T)==1&&std::is_trivially_copyable_v<T>){
+                   in.readFully(&arr,N);
+               }else{
+                   for(T& t:arr)
+                       in >> arr;
+               }
+               return in;
+           }
+
+        template<typename CharTraits,typename Allocator>
+            friend DataInputStream& operator>>(DataInputStream& in,std::basic_string<char,CharTraits,Allocator>& str){
+                auto size{in.read<uint16_t>()};
+                str.resize(size);
+                in.readFully(str.data(),size);
+                return in;
+            }
+    };
+
+    template<typename T,decltype(std::declval<DataInputStream&>() >> std::declval<T&>())* =nullptr>
+        DataInputStream&& operator>>(DataInputStream&& stream,T& val){
+            return static_cast<DataInputStream&&>(stream >> val);
+        }
+
+    class DataOutputStream final: public FilterOutputStream{
+    private:
+        endianness byteorder;
+    public:
+        DataOutputStream(OutputStream& out,endianness byteorder=endianness::big);
+        endianness getEndianness()const noexcept;
+        void setEndianness(endianness endian)noexcept;
+
+        template<typename T,std::enable_if_t<std::is_integral_v<T>||std::is_enum_v<T>||(std::is_floating_point_v<T>&&std::numeric_limits<T>::is_iec559)>* =nullptr>
+            friend DataOutputStream& operator<<(DataOutputStream& out,const T& val){
+                std::byte storage[sizeof(T)];
+                std::memcpy(&storage,&val,sizeof(T));
+                if(out.byteorder!=endianness::native)
+                    swap_bytes(storage);
+                out.write_bytes(storage);
+                return out;
+            }
+        template<typename CharTraits,typename Allocator>
+            friend DataOutputStream& operator<<(DataOutputStream& out,const std::basic_string<char,CharTraits,Allocator>& str){
+                auto len{str.size()};
+                if(len>std::numeric_limits<uint16_t>::max())
+                    len = std::numeric_limits<uint16_t>::max();
+                (out << (uint16_t)len);
+                out.write(str.data(),len);
+                return out;
+            }
     };
 }
 
