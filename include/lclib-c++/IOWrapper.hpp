@@ -272,6 +272,13 @@ namespace lightningcreations::lclib::io{
 #endif
     };
 
+    template<typename DataInput,typename T,
+        std::void_t<std::enable_if_t<std::is_same_v<DataInput,DataInputStream>>
+        ,decltype(std::declval<DataInput&>() >> std::declval<T>())>* =nullptr>
+              DataInput&& operator>>(DataInput&& in,T&& val){
+                  return static_cast<DataInput&>(in >> std::forward<T>(val));
+              }
+
     namespace _detail{
         template<typename Tuple,std::size_t... Ns>
             void read_into(DataInputStream& in,Tuple&& tuple,std::index_sequence<Ns...>){
@@ -354,11 +361,17 @@ namespace lightningcreations::lclib::io{
         }
 
     template<typename Collect,decltype(std::declval<DataOutputStream&>() << *begin(std::declval<const Collect&>()))* =nullptr>
-    DataOutputStream& operator>>(DataOutputStream& out,const Collect& collect){
+    DataOutputStream& operator<<(DataOutputStream& out,const Collect& collect){
         for(const auto& a:collect)
             out << a;
         return out;
     }
+    template<typename DataOutput,typename T,std::void_t<
+        std::enable_if_t<std::is_same_v<DataOutput,DataOutputStream>>,
+        decltype(std::declval<DataOutput&>() << std::declval<T>())>* =nullptr>
+        DataOutput&& operator<<(DataOutput&& out,T&& val){
+            return static_cast<DataOutput&&>(out << std::forward<T>(val));
+        }
 }
 
 #endif //LCLIB_IOWRAPPER_HPP
