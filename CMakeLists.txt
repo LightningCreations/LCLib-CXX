@@ -13,7 +13,7 @@ else()
 endif()
 
 
-add_library(lc-c++ OBJECT include/lclib-c++/TypeTraits.hpp include/lclib-c++/Time.hpp include/lclib-c++/Ranges.hpp include/lclib-c++/Numerics.hpp include/lclib-c++/IOWrapper.hpp src/IOWrapper.cpp include/lclib-c++/Polymorphic.hpp include/lclib-c++/Config.hpp include/lclib-c++/Sockets.hpp
+add_library(lc-c++ OBJECT include/lclib-c++/TypeTraits.hpp include/lclib-c++/Ranges.hpp include/lclib-c++/Numerics.hpp include/lclib-c++/IOWrapper.hpp src/IOWrapper.cpp include/lclib-c++/Polymorphic.hpp include/lclib-c++/Config.hpp include/lclib-c++/Sockets.hpp
         ${LIBLC_CXX_SOCKET_SRC} include/lclib-c++/Dynamic.hpp include/lclib-c++/Version.hpp
         src/Version.cpp)
 set_target_properties(lc-c++ PROPERTIES
