@@ -44,7 +44,7 @@ namespace lightningcreations::lclib::io{
     FileInputStream::FileInputStream(const char* name): file{std::fopen(name,"rb")}{}
 
     FileInputStream::FileInputStream(const std::filesystem::path& p)
-        : FileInputStream{p.u8string()}{}
+        : FileInputStream{(const char*)p.u8string().c_str()}{}
 
     FileInputStream::~FileInputStream(){
         if(file)

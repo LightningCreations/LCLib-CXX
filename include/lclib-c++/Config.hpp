@@ -69,5 +69,17 @@
 LCLIB_CXX_WARN(C++ Compiler Version checks are not supported on MSVC, Things may break)
 #endif
 
+#if __cplusplus>201703L
+#if __has_include(<version>)
+#include <version>
+#endif
+#endif
+
+#if defined(__cpp_impl_three_way_comparison)&&__cpp_impl_three_way_comparison>=201907L
+#if __has_include(<compare>)
+#define LCLIB_CXX_HAS_20_SPACESHIP
+#endif
+#endif
+
 
 #endif //LCLIB_CONFIG_HPP

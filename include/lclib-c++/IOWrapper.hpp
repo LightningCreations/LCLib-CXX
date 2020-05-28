@@ -14,6 +14,7 @@
 #include <lclib-c++/TypeTraits.hpp>
 #include <array>
 #include <cstring>
+#include <variant>
 
 
 
@@ -130,7 +131,7 @@ namespace lightningcreations::lclib::io{
         virtual void write(std::uint8_t)=0;
         [[nodiscard]] virtual bool check_error()const noexcept =0;
         virtual void clear_error()noexcept=0;
-        operator bool()const noexcept;
+        explicit operator bool()const noexcept;
         bool operator!()const noexcept;
         virtual void flush();
         template<typename Byte,std::size_t N,typename=std::enable_if_t<lightningcreations::lclib::type_traits::is_byte_v<Byte>>>
@@ -250,6 +251,8 @@ namespace lightningcreations::lclib::io{
                return in;
            }
 
+
+
         template<typename CharTraits,typename Allocator>
             friend DataInputStream& operator>>(DataInputStream& in,std::basic_string<char,CharTraits,Allocator>& str){
                 auto size{in.read<uint16_t>()};
@@ -257,11 +260,49 @@ namespace lightningcreations::lclib::io{
                 in.readFully(str.data(),size);
                 return in;
             }
+
+#ifdef __cpp_char8_t
+        template<typename CharTraits,typename Allocator>
+        friend DataInputStream& operator>>(DataInputStream& in,std::basic_string<char8_t,CharTraits,Allocator>& str){
+            auto size{in.read<uint16_t>()};
+            str.resize(size);
+            in.readFully(str.data(),size);
+            return in;
+        }
+#endif
     };
 
-    template<typename T,decltype(std::declval<DataInputStream&>() >> std::declval<T&>())* =nullptr>
-        DataInputStream&& operator>>(DataInputStream&& stream,T& val){
-            return static_cast<DataInputStream&&>(stream >> val);
+    namespace _detail{
+        template<typename Tuple,std::size_t... Ns>
+            void read_into(DataInputStream& in,Tuple&& tuple,std::index_sequence<Ns...>){
+                (((void)(in >> std::get<Ns>(tuple))), ...,(void)0);
+            }
+    }
+
+    template<typename... Ts,decltype(((std::declval<DataInputStream&>() >> std::declval<Ts&>()) , ...))* =nullptr>
+         DataInputStream& operator>>(DataInputStream& in,std::tuple<Ts...>& tuple){
+            _detail::read_into(in,tuple,std::make_index_sequence<sizeof...(Ts)>{});
+            return in;
+         }
+    template<typename... Ts,decltype(((std::declval<DataInputStream&>() >> std::declval<Ts&>()) , ...))* =nullptr>
+        DataInputStream& operator>>(DataInputStream& in,std::tuple<Ts&...>&& tuple){
+            _detail::read_into(in,tuple,std::make_index_sequence<sizeof...(Ts)>{});
+            return in;
+        }
+
+    template<typename... Ts,decltype(((std::declval<DataInputStream&>() >> std::declval<Ts&>()), ...))* =nullptr>
+        DataInputStream& operator>>(DataInputStream& in,std::variant<Ts...>& var){
+            return std::visit([&](auto& v){
+                    return in >> v;
+                },var);
+        }
+
+    using std::begin;
+    template<typename Collect,decltype(std::declval<DataInputStream&>() >> *begin(std::declval<Collect&>()))* =nullptr>
+        DataInputStream& operator>>(DataInputStream& in,Collect& collect){
+            for(auto& a:collect)
+                in >> a;
+            return in;
         }
 
     class DataOutputStream final: public FilterOutputStream{
@@ -291,6 +332,33 @@ namespace lightningcreations::lclib::io{
                 return out;
             }
     };
+
+
+    namespace _detail{
+        template<typename Tuple,std::size_t... Ns>
+            void write_to(DataOutputStream& o,const Tuple& tuple,std::index_sequence<Ns...>){
+             (((void)(o << std::get<Ns>(tuple))),...,(void)0);
+            }
+    }
+
+    template<typename... Ts,decltype((((void)(std::declval<DataOutputStream&>() << std::declval<const Ts&>())),...,(void)0))* =nullptr>
+        DataOutputStream& operator<<(DataOutputStream& out,const std::tuple<Ts...>& tuple){
+            _detail::write_to(out,tuple,std::make_index_sequence<sizeof...(Ts)>{});
+        };
+
+    template<typename... Ts,decltype((((void)(std::declval<DataOutputStream&>() << std::declval<const Ts&>())),...,(void)0))* =nullptr>
+        DataOutputStream& operator<<(DataOutputStream& out,const std::variant<Ts...>& variant){
+            return std::visit([&](const auto& v){
+                return out << v;
+            },variant);
+        }
+
+    template<typename Collect,decltype(std::declval<DataOutputStream&>() << *begin(std::declval<const Collect&>()))* =nullptr>
+    DataOutputStream& operator>>(DataOutputStream& out,const Collect& collect){
+        for(const auto& a:collect)
+            out << a;
+        return out;
+    }
 }
 
 #endif //LCLIB_IOWRAPPER_HPP
