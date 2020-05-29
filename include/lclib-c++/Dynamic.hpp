@@ -20,7 +20,6 @@ namespace lclib::dynamic{
         DynamicLibrary(DynamicLibrary&&)noexcept;
         DynamicLibrary& operator=(DynamicLibrary)noexcept;
         DynamicLibrary(const DynamicLibrary&)=delete;
-        DynamicLibrary& operator=(const DynamicLibrary&)=delete;
         template<typename T,typename CharTraits,typename Allocator> T& get(const std::basic_string<char,CharTraits,Allocator>& name){
             if(void* sym = find_sym(name.c_str());sym)
                 return *(T*)sym;

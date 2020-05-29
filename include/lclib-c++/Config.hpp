@@ -66,7 +66,7 @@
 #error LCLib-C++ Requires C++17 or higher
 #endif
 #else
-LCLIB_CXX_WARN(C++ Compiler Version checks are not supported on MSVC, Things may break)
+LCLIB_CXX_WARN(C++ Compiler Version checks are not supported on MSVC, Things may break);
 #endif
 
 #if __cplusplus>201703L
