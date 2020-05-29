@@ -33,7 +33,7 @@
 #if defined(__GNUC__)||defined(__clang__)||defined(_LCCC_CXX)
 #define LCLIB_CXX_HAS_GNU
 #define LCLIB_CXX_UNREACHABLE() __builtin_unreachable()
-#define LCLIB_CXX_WARN(msg) LCLIB_CXX_PRAGMA(message(#msg))
+#define LCLIB_CXX_WARN(...) LCLIB_CXX_PRAGMA(message(#__VA_ARGS__))
 #if defined(_LCCC_CXX)
 #define LCLIB_CXX_HAS_LCEXT
 #endif
@@ -51,7 +51,7 @@
 #define LCLIB_CXX_ORDER_LITTLE 0
 #define LCLIB_CXX_ORDER_BIG 1
 #define LCLIB_CXX_BYTE_ORDER 0
-#define LCLIB_CXX_WARN(msg) LCLIB_CXX_PRAGMA(message(#msg))
+#define LCLIB_CXX_WARN(...) LCLIB_CXX_PRAGMA(message(#__VA_ARGS__))
 #define LCLIB_CXX_UNREACHABLE() (void)(*((int*)0))
 #endif
 

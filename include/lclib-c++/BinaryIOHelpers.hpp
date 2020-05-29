@@ -7,6 +7,10 @@
 
 #include <lclib-c++/IOWrapper.hpp>
 #include <functional>
+#include <tuple>
+#include <variant>
+#include <optional>
+
 
 namespace lclib::io{
     template<typename T> using detect_read_from = std::void_t<decltype(std::declval<DataInputStream&>() >> std::declval<T&>())>;
