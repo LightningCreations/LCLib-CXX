@@ -87,7 +87,6 @@ namespace lclib::io{
         }
     };
 
-
     namespace _detail{
         template<typename Tuple,std::size_t... Ns>
         void read_into(DataInputStream& in,Tuple&& tuple,std::index_sequence<Ns...>){
@@ -139,6 +138,7 @@ namespace lclib::io{
     template<typename... Ts,decltype((((void)(std::declval<DataOutputStream&>() << std::declval<const Ts&>())),...,(void)0))* =nullptr>
     DataOutputStream& operator<<(DataOutputStream& out,const std::tuple<Ts...>& tuple){
         _detail::write_to(out,tuple,std::make_index_sequence<sizeof...(Ts)>{});
+        return out;
     }
 
     template<typename... Ts,decltype((((void)(std::declval<DataOutputStream&>() << std::declval<const Ts&>())),...))* =nullptr>
