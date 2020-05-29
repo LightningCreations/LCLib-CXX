@@ -219,7 +219,7 @@ namespace lclib::io{
                 T val;
                 *this >> val;
                 return std::move(val);
-            };
+            }
 
         template<typename T,std::enable_if_t<!std::is_array_v<T>&&(std::is_integral_v<T>||std::is_enum_v<T>||std::is_floating_point_v<T>)>* =nullptr>
             friend DataInputStream& operator>>(DataInputStream& in,T& t){

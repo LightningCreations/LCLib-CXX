@@ -139,7 +139,7 @@ namespace lclib::io{
     template<typename... Ts,decltype((((void)(std::declval<DataOutputStream&>() << std::declval<const Ts&>())),...,(void)0))* =nullptr>
     DataOutputStream& operator<<(DataOutputStream& out,const std::tuple<Ts...>& tuple){
         _detail::write_to(out,tuple,std::make_index_sequence<sizeof...(Ts)>{});
-    };
+    }
 
     template<typename... Ts,decltype((((void)(std::declval<DataOutputStream&>() << std::declval<const Ts&>())),...))* =nullptr>
     DataOutputStream& operator<<(DataOutputStream& out,const std::variant<Ts...>& variant){
