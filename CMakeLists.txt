@@ -6,7 +6,7 @@ project(LCLib CXX)
 set(CMAKE_CXX_STANDARD_REQUIRED 17)
 
 if(WIN32)
-    set(LIBLC_CXX_SOCKET_SRC src/WinSock.hpp)
+    set(LIBLC_CXX_SOCKET_SRC src/WinSock.cpp)
 else()
     set(LIBLC_CXX_SOCKET_SRC src/PosixSocket.cpp src/PosixDSO.cpp)
 endif()
