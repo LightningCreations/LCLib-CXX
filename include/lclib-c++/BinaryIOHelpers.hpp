@@ -83,6 +83,7 @@ namespace lclib::io{
                 sz = static_cast<typename Base::size_type>(std::numeric_limits<Size>::max());
             out << static_cast<Size>(sz);
             out << vs.underlying;
+            return out;
         }
     };
 
