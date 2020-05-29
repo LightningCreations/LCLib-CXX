@@ -11,7 +11,7 @@
 
 #include <system_error>
 
-namespace lightningcreations::lclib::socket{
+namespace lclib::socket{
     namespace{
         struct TcpInputStream final:InputStream{
         private:

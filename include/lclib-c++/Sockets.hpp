@@ -8,7 +8,7 @@
 #include <memory>
 #include <lclib-c++/IOWrapper.hpp>
 
-namespace lightningcreations::lclib::socket{
+namespace lclib::socket{
     using io::InputStream;
     using io::OutputStream;
     namespace _detail{

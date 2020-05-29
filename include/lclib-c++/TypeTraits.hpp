@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <cstddef>
 
-namespace lightningcreations::lclib::type_traits{
+namespace lclib::type_traits{
 
     struct empty{};
 

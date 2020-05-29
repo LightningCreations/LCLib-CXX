@@ -25,7 +25,7 @@
 #endif
 
 
-namespace lightningcreations::lclib::io{
+namespace lclib::io{
     inline const std::size_t eof(-1);
     class IOException:public std::runtime_error{
     public:
@@ -54,12 +54,12 @@ namespace lightningcreations::lclib::io{
         explicit operator bool()const noexcept;
         bool operator!()const noexcept;
         template<typename Byte,std::size_t N,typename=
-            std::enable_if_t<lightningcreations::lclib::type_traits::is_byte_v<Byte>&&!std::is_const_v<Byte>>>
+            std::enable_if_t<lclib::type_traits::is_byte_v<Byte>&&!std::is_const_v<Byte>>>
             std::size_t read_bytes(Byte(&arr)[N]){
                 return read(arr,N);
             }
         template<typename Byte,std::size_t N,typename=
-            std::enable_if_t<lightningcreations::lclib::type_traits::is_byte_v<Byte>&&!std::is_const_v<Byte>>>
+            std::enable_if_t<lclib::type_traits::is_byte_v<Byte>&&!std::is_const_v<Byte>>>
             std::size_t read_bytes(std::array<Byte,N>& arr){
                 return read(arr.data(),N);
             }
@@ -134,11 +134,11 @@ namespace lightningcreations::lclib::io{
         explicit operator bool()const noexcept;
         bool operator!()const noexcept;
         virtual void flush();
-        template<typename Byte,std::size_t N,typename=std::enable_if_t<lightningcreations::lclib::type_traits::is_byte_v<Byte>>>
+        template<typename Byte,std::size_t N,typename=std::enable_if_t<lclib::type_traits::is_byte_v<Byte>>>
             std::size_t write_bytes(const Byte(&arr)[N]){
                 return write(arr,N);
             }
-        template<typename Byte,std::size_t N,typename=std::enable_if_t<lightningcreations::lclib::type_traits::is_byte_v<Byte>>>
+        template<typename Byte,std::size_t N,typename=std::enable_if_t<lclib::type_traits::is_byte_v<Byte>>>
             std::size_t write_bytes(const std::array<Byte,N>& arr){
                 return write(arr.data(),N);
             }
@@ -221,7 +221,7 @@ namespace lightningcreations::lclib::io{
                 return std::move(val);
             };
 
-        template<typename T,std::enable_if_t<std::is_integral_v<T>||std::is_enum_v<T>||(std::is_floating_point_v<T>&&std::numeric_limits<T>::is_iec559)>* =nullptr>
+        template<typename T,std::enable_if_t<!std::is_array_v<T>&&(std::is_integral_v<T>||std::is_enum_v<T>||std::is_floating_point_v<T>)>* =nullptr>
             friend DataInputStream& operator>>(DataInputStream& in,T& t){
                 if constexpr(std::is_same_v<T,bool>){
                     auto v{in.readSingle()};
@@ -240,7 +240,7 @@ namespace lightningcreations::lclib::io{
                 return in;
             }
 
-        template<typename T,std::size_t N,decltype(std::declval<DataInputStream&>() >> std::declval<T&>())* =nullptr>
+        template<typename T,std::size_t N,std::void_t<decltype(std::declval<DataInputStream&>() >> std::declval<T&>())>* =nullptr>
            friend DataInputStream& operator>>(DataInputStream& in,T(&arr)[N]){
                if constexpr(sizeof(T)==1&&std::is_trivially_copyable_v<T>){
                    in.readFully(&arr,N);
@@ -279,38 +279,6 @@ namespace lightningcreations::lclib::io{
                   return static_cast<DataInput&>(in >> std::forward<T>(val));
               }
 
-    namespace _detail{
-        template<typename Tuple,std::size_t... Ns>
-            void read_into(DataInputStream& in,Tuple&& tuple,std::index_sequence<Ns...>){
-                (((void)(in >> std::get<Ns>(tuple))), ...,(void)0);
-            }
-    }
-
-    template<typename... Ts,decltype(((std::declval<DataInputStream&>() >> std::declval<Ts&>()) , ...))* =nullptr>
-         DataInputStream& operator>>(DataInputStream& in,std::tuple<Ts...>& tuple){
-            _detail::read_into(in,tuple,std::make_index_sequence<sizeof...(Ts)>{});
-            return in;
-         }
-    template<typename... Ts,decltype(((std::declval<DataInputStream&>() >> std::declval<Ts&>()) , ...))* =nullptr>
-        DataInputStream& operator>>(DataInputStream& in,std::tuple<Ts&...>&& tuple){
-            _detail::read_into(in,tuple,std::make_index_sequence<sizeof...(Ts)>{});
-            return in;
-        }
-
-    template<typename... Ts,decltype(((std::declval<DataInputStream&>() >> std::declval<Ts&>()), ...))* =nullptr>
-        DataInputStream& operator>>(DataInputStream& in,std::variant<Ts...>& var){
-            return std::visit([&](auto& v){
-                    return in >> v;
-                },var);
-        }
-
-    using std::begin;
-    template<typename Collect,decltype(std::declval<DataInputStream&>() >> *begin(std::declval<Collect&>()))* =nullptr>
-        DataInputStream& operator>>(DataInputStream& in,Collect& collect){
-            for(auto& a:collect)
-                in >> a;
-            return in;
-        }
 
     class DataOutputStream final: public FilterOutputStream{
     private:
@@ -320,13 +288,19 @@ namespace lightningcreations::lclib::io{
         endianness getEndianness()const noexcept;
         void setEndianness(endianness endian)noexcept;
 
-        template<typename T,std::enable_if_t<std::is_integral_v<T>||std::is_enum_v<T>||(std::is_floating_point_v<T>&&std::numeric_limits<T>::is_iec559)>* =nullptr>
+        template<typename T,std::enable_if_t<!std::is_array_v<T>&&(std::is_integral_v<T>||std::is_enum_v<T>||std::is_floating_point_v<T>)>* =nullptr>
             friend DataOutputStream& operator<<(DataOutputStream& out,const T& val){
                 std::byte storage[sizeof(T)];
                 std::memcpy(&storage,&val,sizeof(T));
                 if(out.byteorder!=endianness::native)
                     swap_bytes(storage);
                 out.write_bytes(storage);
+                return out;
+            }
+        template<typename T,std::size_t N,std::void_t<decltype(std::declval<DataOutputStream&>() << std::declval<const T&>())>* =nullptr>
+            friend DataOutputStream& operator<<(DataOutputStream& out,const T(&arr)[N]){
+                for(const auto& val:arr)
+                    out << val;
                 return out;
             }
         template<typename CharTraits,typename Allocator>
@@ -341,31 +315,7 @@ namespace lightningcreations::lclib::io{
     };
 
 
-    namespace _detail{
-        template<typename Tuple,std::size_t... Ns>
-            void write_to(DataOutputStream& o,const Tuple& tuple,std::index_sequence<Ns...>){
-             (((void)(o << std::get<Ns>(tuple))),...,(void)0);
-            }
-    }
 
-    template<typename... Ts,decltype((((void)(std::declval<DataOutputStream&>() << std::declval<const Ts&>())),...,(void)0))* =nullptr>
-        DataOutputStream& operator<<(DataOutputStream& out,const std::tuple<Ts...>& tuple){
-            _detail::write_to(out,tuple,std::make_index_sequence<sizeof...(Ts)>{});
-        };
-
-    template<typename... Ts,decltype((((void)(std::declval<DataOutputStream&>() << std::declval<const Ts&>())),...,(void)0))* =nullptr>
-        DataOutputStream& operator<<(DataOutputStream& out,const std::variant<Ts...>& variant){
-            return std::visit([&](const auto& v){
-                return out << v;
-            },variant);
-        }
-
-    template<typename Collect,decltype(std::declval<DataOutputStream&>() << *begin(std::declval<const Collect&>()))* =nullptr>
-    DataOutputStream& operator<<(DataOutputStream& out,const Collect& collect){
-        for(const auto& a:collect)
-            out << a;
-        return out;
-    }
     template<typename DataOutput,typename T,std::void_t<
         std::enable_if_t<std::is_same_v<DataOutput,DataOutputStream>>,
         decltype(std::declval<DataOutput&>() << std::declval<T>())>* =nullptr>

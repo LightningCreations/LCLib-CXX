@@ -5,7 +5,7 @@
 #ifndef LCLIB_CXMATH_HPP
 #define LCLIB_CXMATH_HPP
 
-namespace lightningcreations::lclib::cxmath{
+namespace lclib::cxmath{
 
 }
 

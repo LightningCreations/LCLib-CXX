@@ -8,7 +8,7 @@
 
 using namespace std::string_literals;
 
-namespace lightningcreations::lclib::dynamic{
+namespace lclib::dynamic{
     void* DynamicLibrary::find_sym(const char* name){
         return dlsym(this->handle,name);
     }

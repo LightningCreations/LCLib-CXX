@@ -9,7 +9,7 @@
 #include <filesystem>
 #include <stdexcept>
 
-namespace lightningcreations::lclib::dynamic{
+namespace lclib::dynamic{
     struct DynamicLibrary{
     private:
         void* handle;

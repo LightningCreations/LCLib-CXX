@@ -5,7 +5,7 @@
 #include <lclib-c++/Version.hpp>
 #include <lclib-c++/IOWrapper.hpp>
 
-namespace lightningcreations::lclib::version{
+namespace lclib::version{
     io::DataInputStream& operator>>(io::DataInputStream& in,Version& v){
         in >> v.major >> v.minor;
 

@@ -13,12 +13,12 @@
 #include <compare>
 #endif
 
-namespace lightningcreations::lclib::io{
+namespace lclib::io{
     struct DataInputStream;
     struct DataOutputStream;
 }
 
-namespace lightningcreations::lclib::version{
+namespace lclib::version{
     struct Version{
     public:
         uint8_t major;

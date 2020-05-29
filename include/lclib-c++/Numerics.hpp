@@ -5,7 +5,7 @@
 #ifndef LCLIB_NUMERICS_HPP
 #define LCLIB_NUMERICS_HPP
 
-namespace lightningcreations::lclib::numerics{
+namespace lclib::numerics{
 
 }
 

@@ -10,7 +10,7 @@
 #include <utility>
 #include <iterator>
 
-namespace lightningcreations::lclib::ranges{
+namespace lclib::ranges{
     template<typename T> struct numeric_range{
         static_assert(std::is_trivially_copyable_v<T>,"T must be trivially copyable");
         static_assert(std::numeric_limits<T>::is_integer(),"T must satisfy IntegerNumeric");

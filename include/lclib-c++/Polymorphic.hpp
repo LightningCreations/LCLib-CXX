@@ -16,7 +16,7 @@
 
 
 
-namespace lightningcreations::lclib::polymorphic{
+namespace lclib::polymorphic{
     template<typename T> struct PolymorphicWrapper final{
         static_assert(std::has_virtual_destructor_v<T>,"PolymorphicWrapper Requires a polymorphic type");
         static_assert(alignof(T)<=alignof(std::max_align_t),"PolymorphicWrapper does not support over-aligned types");

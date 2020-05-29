@@ -3,7 +3,7 @@
 //
 #include <lclib-c++/IOWrapper.hpp>
 #include <cstring>
-namespace lightningcreations::lclib::io{
+namespace lclib::io{
     InputStream::operator bool() const noexcept{
         return !this->check_error();
     }
