@@ -14,8 +14,8 @@
 #endif
 
 namespace lclib::io{
-    struct DataInputStream;
-    struct DataOutputStream;
+    class DataInputStream;
+    class DataOutputStream;
 }
 
 namespace lclib::version{
