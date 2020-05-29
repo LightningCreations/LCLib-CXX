@@ -11,6 +11,7 @@ else()
     set(LIBLC_CXX_SOCKET_SRC src/PosixSocket.cpp src/PosixDSO.cpp)
 endif()
 
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(lc-c++-objects OBJECT include/lclib-c++/TypeTraits.hpp include/lclib-c++/Ranges.hpp include/lclib-c++/Numerics.hpp include/lclib-c++/IOWrapper.hpp src/IOWrapper.cpp include/lclib-c++/Polymorphic.hpp include/lclib-c++/Config.hpp include/lclib-c++/Sockets.hpp
         ${LIBLC_CXX_SOCKET_SRC} include/lclib-c++/Dynamic.hpp include/lclib-c++/Version.hpp

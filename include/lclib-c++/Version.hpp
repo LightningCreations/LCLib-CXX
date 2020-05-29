@@ -25,7 +25,7 @@ namespace lclib::version{
         uint8_t minor;
         Version()noexcept=default;
         constexpr Version(uint16_t major,uint8_t minor) noexcept:
-            major(major-1),minor{minor}{}
+            major{static_cast<uint8_t>(major-1)},minor{minor}{}
         constexpr Version(const Version&)noexcept=default;
         constexpr Version& operator=(const Version&)noexcept=default;
         [[nodiscard]] constexpr uint16_t getMajorVersion()const{
