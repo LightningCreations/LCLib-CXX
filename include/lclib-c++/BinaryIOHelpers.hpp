@@ -182,6 +182,7 @@ namespace lclib::io{
             else
                 return out;
         }
+    template<typename T,typename Size=std::size_t> using variable_array = variable_sized<std::vector<T>,Size>;
 }
 
 
