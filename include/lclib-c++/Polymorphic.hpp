@@ -34,15 +34,15 @@ namespace lclib::polymorphic{
         }
         PolymorphicWrapper(PolymorphicWrapper&& w) noexcept:m_ptr{std::exchange(w.m_ptr,nullptr)}{}
         PolymorphicWrapper(const PolymorphicWrapper&)=delete;
-        template<typename U,std::enable_if_t<std::is_copy_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t))&&!lightningcreations::lclib::type_traits::is_specialization_v<PolymorphicWrapper,U>&&!lightningcreations::lclib::type_traits::is_specialization_v<std::in_place_type_t,U>>* =0>
+        template<typename U,std::enable_if_t<std::is_copy_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t))&&!lclib::type_traits::is_specialization_v<PolymorphicWrapper,U>&&!lclib::type_traits::is_specialization_v<std::in_place_type_t,U>>* =0>
             PolymorphicWrapper(const U& u) noexcept(std::is_nothrow_copy_constructible_v<U>)
             :m_ptr{new(std::nothrow) U{u}}{}
-        template<typename U,std::enable_if_t<!(std::is_copy_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t)))&&!lightningcreations::lclib::type_traits::is_specialization_v<PolymorphicWrapper,U>&&!lightningcreations::lclib::type_traits::is_specialization_v<std::in_place_type_t,U>>* =0>
+        template<typename U,std::enable_if_t<!(std::is_copy_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t)))&&!lclib::type_traits::is_specialization_v<PolymorphicWrapper,U>&&!lclib::type_traits::is_specialization_v<std::in_place_type_t,U>>* =0>
             PolymorphicWrapper(const U& u)=delete;
-        template<typename U,std::enable_if_t<std::is_move_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t))&&!lightningcreations::lclib::type_traits::is_specialization_v<PolymorphicWrapper,U>&&!lightningcreations::lclib::type_traits::is_specialization_v<std::in_place_type_t,U>>* =0>
+        template<typename U,std::enable_if_t<std::is_move_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t))&&!lclib::type_traits::is_specialization_v<PolymorphicWrapper,U>&&!lclib::type_traits::is_specialization_v<std::in_place_type_t,U>>* =0>
         PolymorphicWrapper(U&& u) noexcept(std::is_nothrow_move_constructible_v<U>)
                 :m_ptr{new(std::nothrow) U{std::move(u)}}{}
-        template<typename U,std::enable_if_t<!(std::is_move_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t)))&&!lightningcreations::lclib::type_traits::is_specialization_v<PolymorphicWrapper,U>&&!lightningcreations::lclib::type_traits::is_specialization_v<std::in_place_type_t,U>>* =0>
+        template<typename U,std::enable_if_t<!(std::is_move_constructible_v<U>&&std::is_base_of_v<T,U>&&(alignof(U)<=alignof(std::max_align_t)))&&!lclib::type_traits::is_specialization_v<PolymorphicWrapper,U>&&!lclib::type_traits::is_specialization_v<std::in_place_type_t,U>>* =0>
             PolymorphicWrapper(U&& u)=delete;
         template<typename U,std::enable_if_t<std::is_base_of_v<T,U>>* =0>
             constexpr PolymorphicWrapper(PolymorphicWrapper<U>&& w) noexcept:m_ptr{std::exchange(w.m_ptr,nullptr)}{}
@@ -62,7 +62,7 @@ namespace lclib::polymorphic{
                     throw std::bad_cast{};
             }
 
-        template<typename U,typename... Args,std::enable_if_t<std::is_base_of_v<T,U>&&std::is_constructible_v<U,Args&&...>&&(alignof(U)<=alignof(std::max_align_t))&&!lightningcreations::lclib::type_traits::is_specialization_v<PolymorphicWrapper,U>>* = 0>
+        template<typename U,typename... Args,std::enable_if_t<std::is_base_of_v<T,U>&&std::is_constructible_v<U,Args&&...>&&(alignof(U)<=alignof(std::max_align_t))&&!lclib::type_traits::is_specialization_v<PolymorphicWrapper,U>>* = 0>
             explicit PolymorphicWrapper(std::in_place_type_t<U>,Args&&... args) noexcept(std::is_nothrow_constructible_v<U,Args&&...>)
                 :m_ptr{new(std::nothrow) U(std::forward<Args>(args)...)}{}
 
@@ -156,9 +156,9 @@ namespace lclib::polymorphic{
 
 namespace std{
     template<typename T,typename U>
-    struct common_type<lightningcreations::lclib::polymorphic::PolymorphicWrapper<T>,lightningcreations::lclib::polymorphic::PolymorphicWrapper<U>>{
+    struct common_type<lclib::polymorphic::PolymorphicWrapper<T>,lclib::polymorphic::PolymorphicWrapper<U>>{
         using type = std::enable_if_t<std::has_virtual_destructor_v<std::remove_pointer_t<std::common_type_t<T*,U*>>>,
-                lightningcreations::lclib::polymorphic::PolymorphicWrapper<std::remove_pointer_t<std::common_type_t<T*,U*>>>>;
+                lclib::polymorphic::PolymorphicWrapper<std::remove_pointer_t<std::common_type_t<T*,U*>>>>;
     };
 }
 

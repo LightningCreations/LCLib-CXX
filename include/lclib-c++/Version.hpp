@@ -57,7 +57,6 @@ namespace lclib::version{
             return std::tie(this->major,this->minor)>=std::tie(v.major,v.minor);
         }
 #endif
-// Commented out because the implementation managed to segfault clang
         friend io::DataInputStream& operator>>(io::DataInputStream&,Version&);
         friend io::DataOutputStream& operator<<(io::DataOutputStream&,const Version&);
     };

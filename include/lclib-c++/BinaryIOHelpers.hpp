@@ -97,7 +97,11 @@ namespace lclib::io{
             (((void)(in >> std::get<Ns>(tuple))), ...,(void)0);
         }
     }
-
+    template<typename T, typename U,decltype((std::declval<DataInputStream&>() >> std::declval<T&>),(std::declval<DataInputStream&>() >> std::declval<U&>()))* =nullptr>
+        DataInputStream& operator>>(DataInputStream& in, std::pair<T,U>& pair){
+        _detail::read_into(in,pair,std::make_index_sequence<2>{});
+        return in;
+    }
     template<typename... Ts,decltype(((std::declval<DataInputStream&>() >> std::declval<Ts&>()) , ...))* =nullptr>
     DataInputStream& operator>>(DataInputStream& in,std::tuple<Ts...>& tuple){
         _detail::read_into(in,tuple,std::make_index_sequence<sizeof...(Ts)>{});
@@ -138,7 +142,11 @@ namespace lclib::io{
             (((void)(o << std::get<Ns>(tuple))),...,(void)0);
         }
     }
-
+    template<typename T,typename U,decltype((std::declval<DataOutputStream&>() << std::declval<const T&>()),std::declval<DataOutputStream&>() << std::declval<const U&>())* =nullptr>
+    DataOutputStream& operator<<(DataOutputStream& out,const std::pair<T,U>& p){
+        _detail::write_to(out,p,std::make_index_sequence<2>{});
+        return out;
+    }
     template<typename... Ts,decltype((((void)(std::declval<DataOutputStream&>() << std::declval<const Ts&>())),...,(void)0))* =nullptr>
     DataOutputStream& operator<<(DataOutputStream& out,const std::tuple<Ts...>& tuple){
         _detail::write_to(out,tuple,std::make_index_sequence<sizeof...(Ts)>{});

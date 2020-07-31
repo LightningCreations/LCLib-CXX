@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.15)
 project(LCLib CXX)
 
 
-
-set(CMAKE_CXX_STANDARD_REQUIRED 17)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(WIN32)
     set(LIBLC_CXX_SOCKET_SRC src/WinSock.cpp src/WinDLL.cpp)
@@ -15,7 +15,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(lc-c++-objects OBJECT include/lclib-c++/TypeTraits.hpp include/lclib-c++/Ranges.hpp include/lclib-c++/Numerics.hpp include/lclib-c++/IOWrapper.hpp src/IOWrapper.cpp include/lclib-c++/Polymorphic.hpp include/lclib-c++/Config.hpp include/lclib-c++/Sockets.hpp
         ${LIBLC_CXX_SOCKET_SRC} include/lclib-c++/Dynamic.hpp include/lclib-c++/Version.hpp
-        src/Version.cpp include/lclib-c++/BinaryIOHelpers.hpp)
+        src/Version.cpp include/lclib-c++/BinaryIOHelpers.hpp
+        include/lclib-c++/Time.hpp)
 set_target_properties(lc-c++-objects PROPERTIES
         POSITION_INDEPENDENT_CODE ON)
 target_include_directories(lc-c++-objects PUBLIC include)
@@ -35,9 +36,6 @@ set_target_properties(lc-c++-static PROPERTIES OUTPUT_NAME lc-c++_static)
 endif()
 
 install(TARGETS lc-c++-static lc-c++-shared
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
         )
 
 if(NOT LIBLC_CXX_LINKSHARED)
@@ -46,4 +44,4 @@ else()
     add_library(lc-c++ ALIAS lc-c++-shared)
 endif()
 
-install(DIRECTORY include/lclib-c++ DESTINATION include)
+install(DIRECTORY include/lclib-c++ TYPE INCLUDE)

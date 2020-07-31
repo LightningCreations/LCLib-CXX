@@ -7,10 +7,8 @@
 
 // Test if we have <span>
 #if __cplusplus>201703L
-# ifdef __has_include
-#  if __has_include(<span>)
-#    define LCLIB_CXX_HAS_SPAN
-#  endif
+# if __has_include(<span>)
+#   define LCLIB_CXX_HAS_SPAN
 # endif
 #endif
 
@@ -38,8 +36,8 @@
 #define LCLIB_CXX_HAS_LCEXT
 #endif
 #ifndef LCLIB_CXX_DLL_EXPORT
-#define LCLIB_CXX_DLL_EXPORT __attribute__((visibility(default)))
-#define LCLIB_CXX_DLL_IMPORT __attribute__((visibility(default)))
+#define LCLIB_CXX_DLL_EXPORT __attribute__((visibility("default")))
+#define LCLIB_CXX_DLL_IMPORT __attribute__((visibility("default")))
 #endif
 #define LCLIB_CXX_ORDER_LITTLE __ORDER_LITTLE_ENDIAN__
 #define LCLIB_CXX_ORDER_BIG __ORDER_BIG_ENDIAN__
