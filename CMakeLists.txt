@@ -13,6 +13,8 @@ endif()
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+add_compile_definitions($<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebugInfo>>:LCLIB_CXX_DEBUG>)
+
 add_library(lc-c++-objects OBJECT include/lclib-c++/TypeTraits.hpp include/lclib-c++/Ranges.hpp include/lclib-c++/Numerics.hpp include/lclib-c++/IOWrapper.hpp src/IOWrapper.cpp include/lclib-c++/Polymorphic.hpp include/lclib-c++/Config.hpp include/lclib-c++/Sockets.hpp
         ${LIBLC_CXX_SOCKET_SRC} include/lclib-c++/Dynamic.hpp include/lclib-c++/Version.hpp
         src/Version.cpp include/lclib-c++/BinaryIOHelpers.hpp
@@ -35,13 +37,20 @@ else()
 set_target_properties(lc-c++-static PROPERTIES OUTPUT_NAME lc-c++_static)
 endif()
 
-install(TARGETS lc-c++-static lc-c++-shared
-        )
+install(TARGETS lc-c++-static lc-c++-shared)
 
-if(NOT LIBLC_CXX_LINKSHARED)
+
+if(NOT LIBLC_CXX_LINK_SHARED)
     add_library(lc-c++ ALIAS lc-c++-static)
 else()
     add_library(lc-c++ ALIAS lc-c++-shared)
+endif()
+
+option(LIBLC_CXX_BUILD_TESTS "Build the lclib-c++ test suite" ON)
+
+if(LIBLC_CXX_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
 endif()
 
 install(DIRECTORY include/lclib-c++ TYPE INCLUDE)

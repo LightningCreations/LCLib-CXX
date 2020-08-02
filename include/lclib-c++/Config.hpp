@@ -79,5 +79,10 @@ LCLIB_CXX_WARN(C++ Compiler Version checks are not supported on MSVC, Things may
 #endif
 #endif
 
+#ifdef LCLIB_CXX_DEBUG
+#define LCLIB_CXX_ASSERT(expr,message) if(expr){throw std::domain_error{"Assertion Failed at " __FILE__ LCLIB_CXX_QUOTE(__LINE__) LCLIB_CXX_QUOTE(__COLLUM__) ": " message};} ((void)0)
+#else
+#define LCLIB_CXX_ASSERT(expr,message) if(expr){LCLIB_CXX_UNREACHABLE();} ((void)0)
+#endif
 
 #endif //LCLIB_CONFIG_HPP
