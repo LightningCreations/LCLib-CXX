@@ -28,14 +28,14 @@ namespace lclib::version{
         constexpr Version()noexcept=default;
         constexpr Version(uint16_t major,uint8_t minor):
             major{static_cast<uint8_t>(major-1)},minor{minor}{
-            LCLIB_CXX_ASSERT(major==0||major>256,"major must be between 1 and 256");
+            if(major==0||major>256)throw std::domain_error{"major must be between 1 and 256"};
         }
         constexpr Version(const Version&)noexcept=default;
         constexpr Version& operator=(const Version&)noexcept=default;
-        [[nodiscard]] constexpr uint16_t getMajorVersion()const{
+        [[nodiscard]] constexpr uint16_t getMajorVersion()const noexcept{
             return static_cast<uint16_t>(major)+1;
         }
-        [[nodiscard]] constexpr uint8_t getMinorVersion()const{
+        [[nodiscard]] constexpr uint8_t getMinorVersion()const noexcept{
             return minor;
         }
 #ifdef LCLIB_CXX_HAS_20_SPACESHIP

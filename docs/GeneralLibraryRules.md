@@ -132,10 +132,75 @@ _Note - This is intended to allow the implementation to define constructs,
 ## lclib Namespace
 
 All constructs defined by this specification are made available in the `lclib` namespace,
- or a . 
+ or any subnamespace are protected by this specification. 
+The behaviour of a program that defines names within such namespaces is undefined.
 
+## Transitive Dependencies
+
+The behaviour of a program which names a symbol defined by this
+ specification is undefined, unless the symbol is defined in a header included by the program,
+ or the symbol exists in a header, which any header included by the program is permitted to 
+ make symbols available from, or that symbol is an overloaded operator, or function,
+  referenced by argument-dependent lookup. 
+  
  
+_Note - This allows for implementations to include other headers from this api,
+ even where those headers are not permitted or required to be included, 
+ to allow implementations to satisfy requirements in this api - End Note_
+
+Including any header defined by this api may make available any symbols defined
+ in any standard library header. 
+
+If the synopsis of a header has the line `#include <header>` then the symbols defined by `<header>`
+ shall be made available to programs which include the api header. 
+
+## Functions
+
+The behaviour is undefined if any function defined by this api appears in any
+ context other than a direct function call (of the form `function(args...)`),
+ macro-suppressed function call (of the form `(function)(args...)`,
+ or implicit call through an overloaded operator, user-defined-literal, or `new`, `delete`, `new[]`, or `delete[]` expression. 
+
+_Note - In particular, taking the address of a function or member-function, 
+ or decaying a function to a pointer-to-function has undefined behaviour - End Note_
+
+
+Additionally, the behaviour is undefined if a non-member function declared by this api,
+ with any of the following names, is called, except if the call is resolved through Argument-dependent lookup:
+* swap
+* begin
+* end
+* cbegin
+* cend
+* rbegin
+* rend
+* crbegin
+* crend
+* get, if the function is declared as a function template. 
+
+_Note - This allows these functions to be declared in a method which is only findable through ADL - End Note_
+
+
+## Operators
+
+The behaviour of a program that explicitly calls to
+ any overloaded operator function is undefined, unless:
+* The operator function is an overload of `operator->()`, OR
+* The operator function is an overload of `operator new`, `operator delete`, `operator new[]`, or `operator delete[]`,  
+
+For the purposes of this rule an explicit call is a call to the operator function,
+ that explicitly uses function call syntax, such as `v.operator+(b)`. 
+ For the function call operator `v(args...)` is not an explicit call,
+  though `v.operator()(args...)` is. 
+  
+_Note - This is provided to allow implementations flexibility in how operators,
+ are defined.  In particular, in C++ 20, implementations may leave comparison operators 
+ undefined and provide `x < y` using the C++ 20 rewritten candidates if `x <=> y` is valid
+- End Note_
+
 ## Templates
+
+
 ### Template Specialization Policy
 
 A Program may Specialize templates provided by lclib-c++, on user-provided types,
