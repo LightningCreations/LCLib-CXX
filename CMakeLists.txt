@@ -1,8 +1,15 @@
 cmake_minimum_required(VERSION 3.15)
 project(LCLib CXX)
 
-
-set(CMAKE_CXX_STANDARD 20)
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+list(FIND CMAKE_CXX_COMPILE_FEATURES cxx_std_20 _pos)
+if(_pos LESS 0)
+    set(CMAKE_CXX_STANDARD 17)
+else()
+    set(CMAKE_CXX_STANDARD 20)
+endif()
+endif()
+message(STATUS "Building lclib-c++ for c++${CMAKE_CXX_STANDARD}")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(WIN32)
