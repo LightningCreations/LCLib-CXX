@@ -14,3 +14,4 @@ function(add_compile_test name)
 endfunction()
 
 add_subdirectory(version)
+add_subdirectory(type_traits)

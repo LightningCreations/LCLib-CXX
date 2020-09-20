@@ -12,6 +12,11 @@
 # endif
 #endif
 
+#if __cplusplus>201703L
+#define LCLIB_CXX_STANDARD_CXX20
+#endif
+
+
 #define LCLIB_CXX_EVAL0(val) val
 #define LCLIB_CXX_EVAL(val) LCLIB_CXX_EVAL0(val)
 #define LCLIB_CXX_QUOTE0(val) #val
@@ -69,6 +74,7 @@ LCLIB_CXX_WARN(C++ Compiler Version checks are not supported on MSVC, Things may
 
 #if __cplusplus>201703L
 #if __has_include(<version>)
+#define LCLIB_CXX_VERSION_INFO
 #include <version>
 #endif
 #endif
@@ -80,9 +86,16 @@ LCLIB_CXX_WARN(C++ Compiler Version checks are not supported on MSVC, Things may
 #endif
 
 #ifdef LCLIB_CXX_DEBUG
-#define LCLIB_CXX_ASSERT(expr,message) if(expr){throw std::domain_error{"Assertion Failed at " __FILE__ LCLIB_CXX_QUOTE(__LINE__) LCLIB_CXX_QUOTE(__COLLUM__) ": " message};} ((void)0)
+#define LCLIB_CXX_ASSERT(expr,message) do{if(expr){throw std::domain_error{"Assertion Failed at " __FILE__ LCLIB_CXX_QUOTE(__LINE__) LCLIB_CXX_QUOTE(__COLLUM__) ": " message};}}while(0)
 #else
-#define LCLIB_CXX_ASSERT(expr,message) if(expr){LCLIB_CXX_UNREACHABLE();} ((void)0)
+#define LCLIB_CXX_ASSERT(expr,message) do{if(expr){LCLIB_CXX_UNREACHABLE();}}while(0)
 #endif
+
+#define LCLIB_CXX_DEPRECATED(message) [[deprecated(LCLIB_CXX_QUOTE(message))]]
+
+#ifndef LCLIB_CXX_VERSION
+#define LCLIB_CXX_VERSION 202008L
+#endif
+
 
 #endif //LCLIB_CONFIG_HPP

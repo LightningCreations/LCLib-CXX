@@ -157,9 +157,13 @@ namespace lclib::type_traits{
     template<typename T,typename... Args> constexpr const bool is_list_constructible_v = is_list_constructible<T,Args...>::value;
     template<typename T,typename U> struct is_list_convertible : std::conjunction<is_list_constructible<T,U>,std::is_convertible<U,T>>{};
 
-    template<template<typename...> class Template,typename Type> struct is_specialization:std::false_type{};
-    template<template<typename...> class Template,typename... Args>
-        struct is_specialization<Template,Template<Args...>>:std::true_type{};
+
+    template<template<typename...> class Template,typename Type> struct is_specialization:
+        std::false_type{};
+
+    template<template<typename...> class Template,typename... Args> struct is_specialization<Template,Template<Args...>>:
+        std::true_type{};
+
     template<template<typename...> class Template,typename Type>
         constexpr bool is_specialization_v = is_specialization<Template,Type>::value;
 }

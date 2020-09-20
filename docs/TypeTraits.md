@@ -45,14 +45,19 @@ The standard library header `<type_traits>` is transitively included by `<lclib-
 
 ## Specialization Policy
 
-Notwithstanding the templates `is_char` and `is_cstring`,
+Notwithstanding the template `is_char`,
  no templates in this library may be specialized by the user. 
 Additionally, users may only specialize `is_char` and `is_cstring` for specific types, 
  see the respective documentation for information about that.
+
+The behaviour of a program which specializes any templates in this header,
+ except for `is_char`, is undefined. 
  
+
 ## Instantiation Policy
 
-Templates in this library may be instantiated with incomplete types. 
+Templates in this library may be instantiated with incomplete types,
+ the specific limitations of instantiations of this form are template specific. 
 
 ## Class Templates
 
@@ -71,20 +76,17 @@ template<bool val,template<typename...> class if_true, template<typename...> cla
 If the bool template value is true, defines a member `type` to be the instantiation of
   if_true with Ts..., otherwise defines that member `type` to be the instantiation of if_false with Ts.... 
     
-If the selected instantiation would be ill-formed, then there is no member `type` (conditional_substitute is SFINAE friendly).
+If the selected instantiation would be ill-formed,
+ then there is no member `type` (conditional_substitute is SFINAE friendly).
 
 The template which is not selected is not instantiated. 
 
 If any type in Ts... is an incomplete type,
  then both of if_true, and if_false must allow incomplete types (reguardless of which template is selected),
- or the selected template MUST allow incomplete types and all such incomplete types shall 
+ or the selected template must allow incomplete types and all such incomplete types shall 
  be either (possibly cv-qualified) void, or an array of an unknown bound. 
  If neither of these constraints are satisfied, the behavior of the instantiation is undefined. 
 
-
-If the selected instantiation is an incomplete type,
- it shall be either (possibly cv-qualified) void, or an array of an unknown bound. 
-If this constraint is violated, the behavior is undefined. 
 
 ### auto_constant
 
@@ -136,6 +138,167 @@ Four types S, T, U, V share a mutual common type if the following conditions are
 Five or More types S, T, U, V, Rest... share a mutual common type
 * S, T, U, and V share a mutual common type
 * All types in Rest... share a mutual common type
-* Each tripet of types in S, T, U, V (S,T,U; S,T,V; S,U,V; T,U,V) share a mutual common type which all types in Rest...
-* `std::common_type_t<S,T,U,V,Rest...>` is well-formed, and all types in `S,T,U,V,Rest...` can be implicitly converted to that type.
+* All types in Rest... share a mutual common type with S
+* All types in Rest... share a mutual common type with T
+* All types in Rest... share a mutual common type with U
+* All types in Rest... share a mutual common type with V
+*`std::common_type_t<S,T,U,V,Rest...>` is well-formed, and all types in `S,T,U,V,Rest...` can be implicitly converted to that type.
 
+If any type in `Ts...` is an incomplete type, other than (possibly cv-qualified) void,
+ or an array of an unknown bound, the behaviour is undefined. 
+ 
+### struct empty
+
+```c++
+struct empty{};
+```
+
+A complete type which has neither a member `type` nor a member `value`. 
+
+It is unspecified if empty can be default constructed, copy constructed, 
+ move constructed, copy assigned, move assigned, or destroyed,
+  or if any of these operations are trivial. 
+
+`empty` shall be an empty type, that is, `std::is_empty<lclib::type_traits::empty>`
+ shall inherit from `std::true_type`. 
+ 
+### struct type_identity
+
+```c++
+template<typename T> struct type_identity{
+    typename T type;
+};
+template<typename T> using type_identity_t = typename type_identity<T>::type;
+```
+
+An instantiation `type_identity<T>` with some type `T`, declares a member `type` which is an alias of `T`.
+
+`T` may be an incomplete type, including an incomplete class type. 
+
+### type always_true
+
+```c++
+template<typename... Ts> using always_true = std::true_type;
+```
+
+An alias for `std::true_type`, regardless of the template parameters.
+
+Any type in `Ts...` may be an incomplete type, including an incomplete class type. 
+
+### type always_false
+
+```c++
+template<typename... Ts> using always_false = std::false_type;
+```
+
+An alias for `std::false_type`, regardless of the template parameters.
+
+Any type in `Ts...` may be an incomplete type, including an incomplete class type. 
+
+### struct nonesuch
+
+```c++
+struct nonesuch{
+    nonesuch(const nonesuch&)=delete;
+    ~nonesuch()=delete;
+    void operator=(const nonesuch&)=delete;
+};
+```
+
+A type which is not *Default Constructible*, *Copy Constructible*, *Move Constructible*,
+ *Copy Assignable*, *Move Assignable*, or *Destructible*. 
+
+### type is_detected
+
+```c++
+template<template<typename...> typename Op,template... Args> struct is_detected;
+```
+
+If the instantiation of `Op` with `Args...` is well formed,
+ then inherits from `std::true_type`, otherwise inherits from `std::false_type`. 
+
+If Op does not permit any type in `Args...`, the behaviour is undefined. 
+
+Notwithstanding the above, all of `Args...` and the instantiation `Op<Args...>` (if well-formed),
+  may be incomplete types.
+
+### type detected_or
+
+```c++
+template<template<typename...> typename Op,typename... Args> using detected_or = /*see below*/;
+```
+
+If the instantiation of `Op` with `Args...` is well-formed, defined as an alias of
+ the template instantiation `Op<Args...>`, otherwise
+ defined as an alias of `nonesuch`.
+ 
+ If Op does not permit any type in `Args...`, the behaviour is undefined. 
+ 
+ Notwithstanding the above, all of `Args...` and the instantiation `Op<Args...>` (if well-formed),
+   may be incomplete types.
+ 
+### type detected_t
+
+```c++
+template<typename Default,template<typename...> typename Op,typename... Args> using detected_t = /*see below*/;
+```
+
+If the instantiation of `Op` with `Args...` is well-formed, defined as an alias of 
+ the template instantiation `Op<Args...>`, otherwise defined as an alias of `Default`.
+ 
+ If Op does not permit any type in `Args...`, the behaviour is undefined. 
+ 
+ Notwithstanding the above, all of `Default`, `Args...`, and the instantiation `Op<Args...>` (if well-formed),
+  may be incomplete types.
+
+### struct is_char
+
+```c++
+template<typename T> struct is_char;
+template<typename T> constexpr bool is_char_v = is_char<T>::value;
+```
+
+`is_char<T>` inherits from `std::true_type` if and only if `T` is a character type,
+ otherwise it inherits from `std::false_type`.
+The primary template inherits from `std::true_type` for a type `T` which is
+ (possibly cv-qualified) `char`, `wchar_t`, `char16_t` and `char32_t`, 
+ or a cv-qualified version of a type for which `is_char` is specialized to inherit from `std::true_type`. 
+ If the C++ Standard in Use is C++20, and the macro `__cpp_char8_t` is defined by the C++ Implementation,
+ it shall also inherit from `std::true_type` for (possibly cv-qualified) `char8_t` (if the macro is defined,
+ but the C++ Standard in Use is not C++20, its unspecified if `std::is_char<char8_t>` inherits from `std::true_type`)
+ 
+`is_char<T>` may be specialized for a user-provided type T. 
+ Any type used to specialize `is_char` must be *Trivial*, 
+ and `std::is_same_v<std::decay_t<T>,T>` must be true.
+ Additionally, `std::char_traits<T>` must be a partial or full specialization
+  of `std::char_traits` which satisfies the requirements of *CharTraits*. 
+The behaviour of a program that specializes this template in violation of these rules is undefined.
+
+
+### struct is_cstring
+
+```c++
+template<typename T> struct is_cstring;
+template<typename T> constexpr bool is_cstring_v = is_cstring<T>::value;
+```
+
+`is_cstring` inherits from `std::true_type` if `T` models a C-style string,
+that is, `T` is either a pointer to or array of a character type.
+
+`is_cstring` inherits from `std::true_type` if `std::decay_t<T>` is a pointer to a type `U`,
+ where `is_char<U>` inherits from `std::true_type`, otherwise `is_cstring` inherits from `std::false_type`.
+ 
+
+### struct is_specialization
+
+```c++
+template<template<typename...> typename Template,typename T> struct is_specialization;
+template<template<typename...> typename Template,typename T> constexpr bool is_specialization_v = is_specialization<Template,T>::value;
+```
+
+`is_specialization<Template,T>` inherits from `std::true_type`,
+ if `T` is `Template<Args...>` for some sequence of arguments `Args...`,
+ otherwise it inherits from `std::false_type`.
+ 
+
+ 
