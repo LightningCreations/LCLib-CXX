@@ -259,8 +259,10 @@ namespace lclib::io{
             }
     };
 
-    template<typename T,decltype(std::declval<DataInputStream&>() >> std::declval<T&>())* =nullptr>
-        DataInputStream&& operator>>(DataInputStream&& stream,T& val){
+    template<typename DInput,typename T,std::void_t<
+    std::enable_if_t<std::is_same_v<T,DataInputStream>>,
+    decltype(std::declval<DataInputStream&>() >> std::declval<T&>())>* =nullptr>
+        DataInputStream&& operator>>(DInput&& stream,T& val){
             return static_cast<DataInputStream&&>(stream >> val);
         }
 
@@ -300,7 +302,12 @@ namespace lclib::io{
                 }
             }
     };
-
+    template<typename DOutput,typename T,
+        std::void_t<std::enable_if_t<std::is_same_v<DOutput,DataOutputStream>>,
+        decltype(std::declval<DataOutputStream&>() << std::declval<const T&>())>* =nullptr>
+        DataOutputStream&& operator<<(DOutput&& out,const T& t){
+            return static_cast<DataOutputStream&&>(out << t);
+        }
     
 }
 
