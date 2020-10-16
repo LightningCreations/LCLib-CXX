@@ -1,0 +1,7 @@
+
+add_compile_test(01-is_specialization-specialization)
+add_compile_test(02-is_specialization-not-specialization)
+add_compile_test(03-conditional_substitute_true)
+add_compile_test(04-conditional_substitute_false)
+add_compile_test(05-conditional_substitute-substitution-failure)
+

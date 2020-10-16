@@ -32,18 +32,22 @@ The revision of the C++ Standard published in 2017,
 ### C++20
 
 The revision of the C++ Standard which was approved in Febuary of 2020,
- is scheduled to be published in the year 2020. 
- As well as any future defect reports intended to amend that revision which have been published. 
+ and is scheduled to be published in the year 2020, 
+ as well as any future defect reports intended to amend that revision which have been published. 
 
 ### C++ Standard in Use
 
-Either C++17 or C++20, depending on the implementation of the C++ Standard,
+Either C++17 or C++20, or some other Version of the C++ Standard,
+ depending on the implementation of the C++ Standard,
  and possibly depending on specified compile-time flags. 
+
+The C++ Standard in Use can be determined by the value of the macro `__cplusplus`.
+For example, if `__cplusplus` is defined as 201703L, the C++ Standard in Use is C++17. 
 
 ### Program
 
 A Program in the context of this specification is a C++ Program as defined by the C++ Standard
- which makes use of construsts defined by this specification, which are not included in the C++ Standard.
+ which makes use of constructs defined by this specification, which are not included in the C++ Standard.
 
 ### Implementation 
 
@@ -117,8 +121,7 @@ Either behaviour which is considered by the C++ Standard to be observable,
 An implementation which does not alter the observable behaviour of any program which is strictly-conforming,
  which causes diagnostics to be issued for ill-formed programs, 
  and which does not cause any Correct Program to become ill-formed. 
-
-
+ 
 ## Reserved Identifiers
 
 Any identifier which starts with a single underscore within the `lclib` namespace or any contained namespace,
@@ -232,4 +235,43 @@ Most templates require that all instantiating parameters are either complete, an
  
 The behavior of violating these rules is undefined.  
 
+A program which includes any header defined by this specification
+ may not define any macro which is a reserved identifier in C++,
+ any name defined by either this specification or any header in the standard library defined by C++,
+ or the name of any standard attribute. The behaviour of a program which does so is undefined,
+ except that the attributes likely and unlikely may be defined as function-like macro,
+ and that some macros defined by the header `<lclib-c++/Config.hpp>` may be defined by the program
+ as provided in the specification for the header. 
+
+
+### Template Full Specialization
+
+A user-provided type in a template is a type which at least partially depends on a type defined by the program.
+Many templates in LCLib-C++ may be specialized for user-provided types, with some constraints.
+Note that while almost all templates generally allow specialization (and thus, the ones that do not will be mentioned explicitly)
+ the inverse is true in the `<lclib-c++/TypeTraits.hpp>` header, where most templates may not be specialized. 
+ 
+A user-provided type is one of the following:
+* A complete type defined by the program (in particular, a type not defined by either the C++ Standard, or by this specification),
+ including the instantiation of a class template defined by the program
+* A cv-qualified version of a user-provided type
+* A pointer to a user-provided type
+* A reference (lvalue or rvalue), to a user-provided type
+* The instantiation of a template (which may be a specialization) defined by C++ Standard 
+ or this specification, where at least one template parameter is a user-provided type,
+ and the C++ Standard or this specification allows that template to be specialized with that type
+ on that argument.
+* An array, including an array of unknown bound,
+ where the component type is a user-provided type.
+
+A template may not be specialized on a type which the primary template does not permit
+ (even if a defined partial specialization would permit the type).
+Additionally, the template may impose any additional constraints on specializations. 
+
+A program may define a partial specialization of any template,
+ provided any instantiation of the partial specialization satisfies the above requirements.
+
+The behaviour of a program that specializes a template defined by this specification
+ in violation of these rules is undefined. 
+ 
 
