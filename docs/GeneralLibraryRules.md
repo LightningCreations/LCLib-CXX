@@ -86,14 +86,13 @@ A well-formed Program which is considered Strictly-conforming by the C++ standar
 ### Correct Program
 
 A well-formed Program which is considered correct by the C++ Standard in use,
- and which makes no use of constructs which this specification assigns Undefined Behaviour,
+ and which makes no use of constructs which this specification considers Undefined,
  and which violates no limit validly imposed by the implementation. 
  
  _Note - A runtime construct which is not evaluated is not considered to be made use of - End Note_
 ### Ill-formed
 
-A program which makes use of either an erroneous C++ construct or construct defined by this specification,
- for which the implementation shall cause a diagnostic. 
+A program which makes use of either an erroneous C++ construct or construct defined by this specification, for which the implementation shall cause a diagnostic. 
  
 ### Ill-formed, no diagnostic required
 
@@ -127,13 +126,13 @@ Any identifier which starts with a single underscore within the `lclib` namespac
 The behaviour of a program which names an identifier of such a form is undefined.
 
 _Note - This is intended to allow the implementation to define constructs,
- needed to provide the specified constructs
+ needed to provide the specified constructs - End Note_
 
 ## lclib Namespace
 
 All constructs defined by this specification are made available in the `lclib` namespace,
  or any subnamespace are protected by this specification. 
-The behaviour of a program that defines names within such namespaces is undefined.
+The behavior of a program that defines names within such namespaces is undefined.
 
 ## Transitive Dependencies
 
@@ -165,7 +164,7 @@ _Note - In particular, taking the address of a function or member-function,
  or decaying a function to a pointer-to-function has undefined behaviour - End Note_
 
 
-Additionally, the behaviour is undefined if a non-member function declared by this api,
+Additionally, the behaviour is undefined if a non-member function declared by this specification,
  with any of the following names, is called, except if the call is resolved through Argument-dependent lookup:
 * swap
 * begin
@@ -176,26 +175,26 @@ Additionally, the behaviour is undefined if a non-member function declared by th
 * rend
 * crbegin
 * crend
-* get, if the function is declared as a function template. 
+* get, if the function is declared as a function template.
 
 _Note - This allows these functions to be declared in a method which is only findable through ADL - End Note_
 
 
 ## Operators
 
-The behaviour of a program that explicitly calls to
- any overloaded operator function is undefined, unless:
+The behaviour of a program that explicitly calls
+ any overloaded operator function defined by this specification is undefined, unless:
 * The operator function is an overload of `operator->()`, OR
 * The operator function is an overload of `operator new`, `operator delete`, `operator new[]`, or `operator delete[]`,  
 
 For the purposes of this rule an explicit call is a call to the operator function,
  that explicitly uses function call syntax, such as `v.operator+(b)`. 
  For the function call operator `v(args...)` is not an explicit call,
-  though `v.operator()(args...)` is. 
+  though `v.operator()(args...)` is (and is thus, undefined ). 
   
-_Note - This is provided to allow implementations flexibility in how operators,
+_Note - This is provided to allow implementations considerable flexibility in how operators,
  are defined.  In particular, in C++ 20, implementations may leave comparison operators 
- undefined and provide `x < y` using the C++ 20 rewritten candidates if `x <=> y` is valid
+ undefined and provide `x < y` using the C++ 20 rewritten candidates if `x <=> y` is valid.
 - End Note_
 
 ## Templates
@@ -212,8 +211,7 @@ If the specialization is a partial specialization, at least one type that is spe
 A type T is a user-provided type if: 
 * It is a class or enumeration type or instantiation of a class template,
  that is declared by neither the C++ Standard Library or lclib-c++
-* It is an instantiation of a class template for which at least one type template parameter is a user-provided type, 
-   transitively.
+* It is an instantiation of a class template for which at least one type template parameter is a user-provided type, transitively.
 * It is a pointer or reference to a user-provided type
 * It is an array, including an array of an unknown bound, of a user-provided type.
 * It is a instantiation of a template defined by either the C++ Standard Library or lclib-c++, 
@@ -227,13 +225,11 @@ The behavior of a program that violates these requirements is undefined.
 ### Incomplete Types
 
 Notwithstanding templates defined in the `<lclib-c++/TypeTraits.hpp>` header,
- by default, templates may not be instantiated with incomplete types. The behavior of instantiating a template 
-  with one or more incomplete types is undefined. 
+ by default, templates may not be instantiated with incomplete types. The behavior of instantiating a template with one or more incomplete types is undefined, except as otherwise provided. 
   
 Templates defined in the TypeTraits Header have special rules. 
-Most templates require that all instantiating parameters are either complete, an array of an unknown bound,
- or (possibly cv-qualfied) void. See documentation of that header for details. 
+Most templates require that all instantiating parameters are either complete, an array of an unknown bound, or (possibly cv-qualfied) void. See documentation of that header for details. 
  
-The behavior of violating these rules is undefined.  to 
+The behavior of violating these rules is undefined.  
 
 
