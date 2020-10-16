@@ -142,7 +142,7 @@ namespace lclib::io{
                 return write(arr.data(),N);
             }
 #ifdef LCLIB_CXX_HAS_SPAN
-        template<typename Byte,std::ptrdiff_t extent,typename=std::enable_if_t<lightningcreations::lclib::type_traits::is_byte_v<Byte>>>
+        template<typename Byte,std::ptrdiff_t extent,typename=std::enable_if_t<lclib::type_traits::is_byte_v<Byte>>>
             std::size_t write_bytes(std::span<const Byte,extent> span){
                 return write(span.data(),span.size());
             } 
