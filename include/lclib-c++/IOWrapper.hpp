@@ -53,17 +53,17 @@ namespace lclib::io{
         explicit operator bool()const noexcept;
         bool operator!()const noexcept;
         template<typename Byte,std::size_t N,typename=
-            std::enable_if_t<lightningcreations::lclib::type_traits::is_byte_v<Byte>&&!std::is_const_v<Byte>>>
+            std::enable_if_t<lclib::type_traits::is_byte_v<Byte>&&!std::is_const_v<Byte>>>
             std::size_t read_bytes(Byte(&arr)[N]){
                 return read(arr,N);
             }
         template<typename Byte,std::size_t N,typename=
-            std::enable_if_t<lightningcreations::lclib::type_traits::is_byte_v<Byte>&&!std::is_const_v<Byte>>>
+            std::enable_if_t<lclib::type_traits::is_byte_v<Byte>&&!std::is_const_v<Byte>>>
             std::size_t read_bytes(std::array<Byte,N>& arr){
                 return read(arr.data(),N);
             }
 #ifdef LCLIB_CXX_HAS_SPAN
-        template<typename Byte,std::ptrdiff_t N,typename=std::enable_if_t<lightningcreations::lclib::type_traits::is_byte_v<Byte>&&!std::is_const_v<Byte>>>
+        template<typename Byte,std::ptrdiff_t N,typename=std::enable_if_t<lclib::type_traits::is_byte_v<Byte>&&!std::is_const_v<Byte>>>
         std::size_t read_bytes(std::span<Byte,N> span){
             return read(span.data(),span.size());
         }
@@ -133,11 +133,11 @@ namespace lclib::io{
         operator bool()const noexcept;
         bool operator!()const noexcept;
         virtual void flush();
-        template<typename Byte,std::size_t N,typename=std::enable_if_t<lightningcreations::lclib::type_traits::is_byte_v<Byte>>>
+        template<typename Byte,std::size_t N,typename=std::enable_if_t<lclib::type_traits::is_byte_v<Byte>>>
             std::size_t write_bytes(const Byte(&arr)[N]){
                 return write(arr,N);
             }
-        template<typename Byte,std::size_t N,typename=std::enable_if_t<lightningcreations::lclib::type_traits::is_byte_v<Byte>>>
+        template<typename Byte,std::size_t N,typename=std::enable_if_t<lclib::type_traits::is_byte_v<Byte>>>
             std::size_t write_bytes(const std::array<Byte,N>& arr){
                 return write(arr.data(),N);
             }
@@ -221,41 +221,41 @@ namespace lclib::io{
             };
 
         template<typename T,std::enable_if_t<std::is_integral_v<T>||std::is_enum_v<T>||(std::is_floating_point_v<T>&&std::numeric_limits<T>::is_iec559)>* =nullptr>
-            friend DataInputStream& operator>>(DataInputStream& in,T& t){
+            DataInputStream& operator>>(T& t){
                 if constexpr(std::is_same_v<T,bool>){
-                    auto v{in.readSingle()};
+                    auto v{this->readSingle()};
                     if(v>1)
                         throw IOException{"Invalid bool value"};
                     t = bool(v);
                 }else if constexpr(sizeof(T)==1/* && !std::is_same_v<T,bool> */){
-                    reinterpret_cast<uint8_t&>(t) = in.readSingle();
+                    reinterpret_cast<uint8_t&>(t) = this->readSingle();
                 }else{
                     std::byte storage[sizeof(T)];
-                    in.readFully(&storage,sizeof(T));
-                    if(in.byteorder!=endianness::native)
+                    this->readFully(&storage,sizeof(T));
+                    if(this->byteorder!=endianness::native)
                         swap_bytes(storage);
                     memcpy(&t,&storage,sizeof(T));
                 }
-                return in;
+                return *this;
             }
 
         template<typename T,std::size_t N,decltype(std::declval<DataInputStream&>() >> std::declval<T&>())* =nullptr>
-           friend DataInputStream& operator>>(DataInputStream& in,T(&arr)[N]){
+            DataInputStream& operator>>(T(&arr)[N]){
                if constexpr(sizeof(T)==1&&std::is_trivially_copyable_v<T>){
-                   in.readFully(&arr,N);
+                   this->readFully(&arr,N);
                }else{
                    for(T& t:arr)
-                       in >> arr;
+                       (*this) >> arr;
                }
-               return in;
+               return *this;
            }
 
         template<typename CharTraits,typename Allocator>
-            friend DataInputStream& operator>>(DataInputStream& in,std::basic_string<char,CharTraits,Allocator>& str){
-                auto size{in.read<uint16_t>()};
+            DataInputStream& operator>>(std::basic_string<char,CharTraits,Allocator>& str){
+                auto size{this->read<uint16_t>()};
                 str.resize(size);
-                in.readFully(str.data(),size);
-                return in;
+                this->readFully(str.data(),size);
+                return *this;
             }
     };
 
@@ -271,26 +271,37 @@ namespace lclib::io{
         DataOutputStream(OutputStream& out,endianness byteorder=endianness::big);
         endianness getEndianness()const noexcept;
         void setEndianness(endianness endian)noexcept;
-
         template<typename T,std::enable_if_t<std::is_integral_v<T>||std::is_enum_v<T>||(std::is_floating_point_v<T>&&std::numeric_limits<T>::is_iec559)>* =nullptr>
-            friend DataOutputStream& operator<<(DataOutputStream& out,const T& val){
+            DataOutputStream& operator<<(const T& val){
                 std::byte storage[sizeof(T)];
                 std::memcpy(&storage,&val,sizeof(T));
-                if(out.byteorder!=endianness::native)
+                if(this->byteorder!=endianness::native)
                     swap_bytes(storage);
-                out.write_bytes(storage);
-                return out;
+                this->write_bytes(storage);
+                return *this;
             }
         template<typename CharTraits,typename Allocator>
-            friend DataOutputStream& operator<<(DataOutputStream& out,const std::basic_string<char,CharTraits,Allocator>& str){
+            DataOutputStream& operator<<(const std::basic_string<char,CharTraits,Allocator>& str){
                 auto len{str.size()};
                 if(len>std::numeric_limits<uint16_t>::max())
                     len = std::numeric_limits<uint16_t>::max();
-                (out << (uint16_t)len);
-                out.write(str.data(),len);
-                return out;
+                ((*this) << (uint16_t)len);
+                this->write(str.data(),len);
+                return *this;
+            }
+
+        template<typename T,std::size_t N,decltype(std::declval<DataOutputStream&>()<<std::declval<const T&>())* =nullptr>
+            DataOutputStream& operator<<(const T(&arr)[N]){
+                if constexpr(std::is_trivially_copyable_v<T>&&sizeof(T)==1)
+                    this->write(&arr,N);
+                else{
+                    for(const T& t:arr)
+                        (*this) << t;
+                }
             }
     };
+
+    
 }
 
 #endif //LCLIB_IOWRAPPER_HPP

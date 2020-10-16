@@ -80,12 +80,15 @@ _Note - Valid responses to undefined behaviour include (but are not limited to) 
  discard the behaviour, ignore the behaviour (potentially causing further issues with well-defined constructs),
  cause or report an error. - End Note_
 
+_Note - In the presence of undefined behaviour, all requirements of this specification
+ are vacated, not just those of the construct that has the undefined behaviour. 
+ This includes any code preceding the first occurance of undefined behaviour - End Note_
+
 ### Strictly-conforming Program
 
 A well-formed Program which is considered Strictly-conforming by the C++ standard in use, 
  except that it includes headers defined by this specification,
- and makes use of no constructs which this specification considers Unspecified, Implementation-defined,
-  or Undefined, and violates no minimum implementation limits imposed by this specification. 
+ and makes use of no constructs which this specification considers Unspecified, Implementation-defined, or Undefined, and violates no minimum implementation limits imposed by this specification. 
   
 ### Correct Program
 
