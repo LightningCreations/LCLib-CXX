@@ -307,7 +307,7 @@ namespace lclib::array{
             return a1<a2||a1==a2;
         }
     template<typename T,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>()||std::declval<const T&>()==std::declval<const T&>())>* =nullptr>
-        bool operator<=(const DynamicArray<T>& a1,const DynamicArray<T>& a2) noexcept(noexcept(a1[0]<a2[0]||a1[0]==a2[0])){
+        bool operator>=(const DynamicArray<T>& a1,const DynamicArray<T>& a2) noexcept(noexcept(a1[0]<a2[0]||a1[0]==a2[0])){
             return a1>a2||a1==a2;
         }
     template<typename T,std::void_t<decltype(std::declval<const T&>()==std::declval<const T&>())>* =nullptr>
