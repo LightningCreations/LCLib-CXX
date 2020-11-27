@@ -22,10 +22,10 @@ namespace lclib::io{
 namespace lclib::version{
     struct Version{
     private:
-        uint8_t major{};
-        uint8_t minor{};
+        uint8_t major;
+        uint8_t minor;
     public:
-        constexpr Version()noexcept=default;
+        Version()noexcept=default;
         constexpr Version(uint16_t major,uint8_t minor):
             major{static_cast<uint8_t>(major-1)},minor{minor}{
             if(major==0||major>256)throw std::domain_error{"major must be between 1 and 256"};

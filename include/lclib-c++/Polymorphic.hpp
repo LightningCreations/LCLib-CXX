@@ -151,9 +151,6 @@ namespace lclib::polymorphic{
         friend void swap(PolymorphicWrapper<T>& pw1,PolymorphicWrapper<T>& pw2)noexcept(_detail::customization::adl_and_std::swap(pw1.m_ptr,pw2.m_ptr)){
             _detail::customization::adl_and_std::swap(pw1.m_ptr,pw2.m_ptr);
         }
-
-        friend auto begin(PolymorphicWrapper<T>& pw) noexcept(_detail::customization::adl_and_std::)
-
         
     };
 

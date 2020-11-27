@@ -23,7 +23,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_compile_definitions($<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebugInfo>>:LCLIB_CXX_DEBUG>)
 
 add_library(lc-c++-objects OBJECT include/lclib-c++/TypeTraits.hpp include/lclib-c++/Ranges.hpp include/lclib-c++/Numerics.hpp include/lclib-c++/IOWrapper.hpp src/IOWrapper.cpp include/lclib-c++/Polymorphic.hpp include/lclib-c++/Config.hpp include/lclib-c++/Sockets.hpp
-        ${LIBLC_CXX_SOCKET_SRC} include/lclib-c++/Dynamic.hpp include/lclib-c++/Version.hpp
+        ${LIBLC_CXX_SOCKET_SRC} include/lclib-c++/Dynamic.hpp 
+        include/lclib-c++/DynamicArray.hpp
+        include/lclib-c++/Version.hpp
         src/Version.cpp include/lclib-c++/BinaryIOHelpers.hpp
         include/lclib-c++/Time.hpp)
 set_target_properties(lc-c++-objects PROPERTIES

@@ -274,6 +274,7 @@ The primary template inherits from `std::true_type` for a type `T` which is
   of `std::char_traits` which satisfies the requirements of *CharTraits*. 
 The behaviour of a program that specializes this template in violation of these rules is undefined.
 
+If `T` is an incomplete type, it shall either be (possibly cv-qualified) void, or an array of an unknown bound. Otherwise, the behaviour is undefined.
 
 ### struct is_cstring
 

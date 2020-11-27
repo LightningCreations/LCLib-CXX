@@ -33,19 +33,19 @@ lclib::io::DataOutputStream& operator<<(lclib::io::DataOutputStream& out,const V
 ### Constructors and Assignment Operators
 
 ```c++
-constexpr Version()noexcept=default; // (1)
+Version()noexcept=default; // (1)
 constexpr Version(uint16_t major,uint8_t minor); // (2)
 constexpr Version(const Version& rhs)=default; // (3)
 constexpr Version& operator=(const Version& rhs)=default; // (4)
 ```
 
 1. When used to *value-initialize* an object of type `Version`, shall be equivalent to the constructor call Version{1,0}. 
- When used to *default-initialize* an object of type `Version`, the resulting version is unspecified.
+ When used to *default-initialize* an object of type `Version`, the resulting version is indeterminate. _Note - Version may be value-initialized in a core constant expression - End Note_
 2. Constructs a version in the from the given major and minor components. Major shall be between 1 and 256 inclusive. 
 3. Copy-constructs from the version represented by rhs.
 4. Copy-assigns from the version represented by rhs. 
 
-The class Version shall be *Trivially Copyable*, shall satisfy *LiteralType*,
+The class Version shall be *Trivial*, shall satisfy *LiteralType*,
  and shall be a *Standard Layout Type*. 
  
 Default-initializing an object of type `Version` with static or thread storage duration,
@@ -88,7 +88,7 @@ constexpr friend std::strong_ordering operator <=>(const Version& v1,const Versi
      * `v1 >= v2` and `(v1 <=> v2) >= 0`
      * `v1 <=> v2` and `(v1 <=> v2) <=> 0`
 
-It is unspecified if (7) is available, except that (7) shall be available if including `<lclib-c++/Config.hpp>`
+It is unspecified if (7) is available, except that (7) shall be available if including `<lclib-c++/Config.hpp>`0
  defines the macro `LCLIB_CXX_HAS_20_SPACESHIP`. 
 If (7) is available, than the Version class shall have *strong-structural ordering*. 
 
