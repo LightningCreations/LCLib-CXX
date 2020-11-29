@@ -10,6 +10,8 @@
 #include <initializer_list>
 #include <array>
 #include <algorithm>
+#include <utility>
+#include <tuple>
 
 #ifdef LCLIB_CXX_HAS_20_SPACESHIP
 #include <compare>
@@ -19,10 +21,11 @@
 
 namespace lclib::array{
 
+
     template<typename T,typename Alloc=std::allocator<T>> struct DynamicArray{
     public:
         static_assert(std::is_same_v<T,typename std::allocator_traits<Alloc>::value_type>);
-        
+        static_assert(std::is_object_v<T>);
         using value_type = T;
         using reference = T&;
         using const_reference = const T&;
@@ -50,7 +53,7 @@ namespace lclib::array{
             }
         }
 
-        template<std::enable_if_t<std::is_copy_constructible_v<T>>* =nullptr> DynamicArray(const DynamicArray& a,const Alloc& alloc) : _m_size{}, _m_ptr{}, _m_constructed{}, _m_alloc(alloc){
+        template<typename U,typename Alloc2,std::enable_if_t<std::is_constructible_v<T,const U&>>* =nullptr> DynamicArray(const DynamicArray<U,Alloc2>& a,const Alloc& alloc) : _m_size{}, _m_ptr{}, _m_constructed{}, _m_alloc(alloc){
             this->_m_ptr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,a._m_size);
             this->_m_size = a._m_size;
             for(;_m_constructed<_m_size;_m_constructed++){
@@ -58,7 +61,7 @@ namespace lclib::array{
             }
         }
 
-        template<std::enable_if_t<std::is_move_constructible_v<T>>* =nullptr> DynamicArray(DynamicArray&& a,const Alloc& alloc) : _m_size{}, _m_ptr{}, _m_constructed{}, _m_alloc(alloc){
+        template<typename U,typename Alloc2,std::enable_if_t<std::is_constructible_v<T,U&&>>* =nullptr> DynamicArray(DynamicArray<U,Alloc2>&& a,const Alloc& alloc) : _m_size{}, _m_ptr{}, _m_constructed{}, _m_alloc(alloc){
             this->_m_ptr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,a._m_size);
             this->_m_size = a._m_size;
             for(;_m_constructed<_m_size;_m_constructed++){
@@ -102,18 +105,27 @@ namespace lclib::array{
             ,_m_size(std::exchange(a._m_size,0)), _m_alloc{std::move(a._m_alloc)}, _m_constructed(a._m_constructed){}
 
 
-        template<std::enable_if_t<std::is_default_constructible_v<T>>* =nullptr> DynamicArray(size_type n,const Alloc& alloc = Alloc()) 
+        DynamicArray(size_type n,const Alloc& alloc = Alloc()) 
             : _m_ptr{}, _m_size{}, _m_constructed{}, _m_alloc(alloc){
                 this->_m_ptr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,n);
                 this->_m_size = n;
                 for(;_m_constructed<_m_size;_m_constructed++)
                     std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+this->_m_size); 
             }
+
+        DynamicArray(size_type n,const T& t,const Alloc& alloc = Alloc()) 
+            : _m_ptr{}, _m_size{}, _m_constructed{}, _m_alloc(alloc){
+                this->_m_ptr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,n);
+                this->_m_size = n;
+                for(;_m_constructed<_m_size;_m_constructed++)
+                    std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+this->_m_size,t); 
+            }
         
         template<typename Container,std::enable_if_t<std::is_constructible_v<T,decltype(* _detail::customization::adl_and_std::begin(std::declval<Container>()))>>* =nullptr,
             std::void_t<decltype(_detail::customization::adl_and_std::size(std::declval<Container>()))>* =nullptr>
-            explicit DynamicArray(Container&& container,const Alloc& alloc = Alloc()) : _m_ptr{}, _m_size(_detail::customization::adl_and_std::size(std::forward<Container>(container))), _m_constructed{}, _m_alloc{alloc}{
-                _m_ptr = std::allocator_traits<Alloc>::allocate(_m_alloc,_m_size);
+            explicit DynamicArray(Container&& container,const Alloc& alloc = Alloc()) : _m_ptr{}, _m_size(), _m_constructed{}, _m_alloc{alloc}{
+                _m_ptr = std::allocator_traits<Alloc>::allocate(_m_alloc,_detail::customization::adl_and_std::size(std::forward<Container>(container)));
+                _m_size = _detail::customization::adl_and_std::size(std::forward<Container>(container));
                 auto iter = _detail::customization::adl_and_std::begin(std::forward<Container>(container));
                 for(;_m_constructed<_m_size;_m_constructed++,iter++)
                     std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+this->_m_constructed,*iter);
@@ -123,11 +135,13 @@ namespace lclib::array{
         template<typename ForwardIterator,std::enable_if_t<
             std::is_base_of_v<std::forward_iterator_tag,typename std::iterator_traits<ForwardIterator>::iterator_category>>* =nullptr,
             std::enable_if_t<std::is_constructible_v<T,typename std::iterator_traits<ForwardIterator>::reference>>* = nullptr>
-            DynamicArray(ForwardIterator begin,ForwardIterator end,const Alloc& alloc=Alloc()) : _m_ptr{},_m_size(std::distance(begin,end)),_m_constructed{}, _m_alloc{alloc}{
+            DynamicArray(ForwardIterator begin,ForwardIterator end,const Alloc& alloc=Alloc()) : _m_ptr{},_m_size(),_m_constructed{}, _m_alloc{alloc}{
                  _m_ptr = std::allocator_traits<Alloc>::allocate(_m_alloc,_m_size);
+                 this->_m_size = std::distance(begin,end);
                 for(;_m_constructed<_m_size;_m_constructed++,begin++)
                     std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+this->_m_constructed,*begin);
             }
+
 
         ~DynamicArray(){
             if(_m_ptr){
@@ -374,6 +388,8 @@ namespace lclib::array{
     template<typename T,std::size_t N,typename Alloc> DynamicArray(const std::array<T,N>&,const Alloc&)->DynamicArray<T,Alloc>;
     template<typename T> DynamicArray(std::initializer_list<T>) -> DynamicArray<T>;
     template<typename T,typename Alloc> DynamicArray(std::initializer_list<T>,const Alloc&)->DynamicArray<T,Alloc>;
+    template<typename T,typename Alloc1,typename Alloc2> DynamicArray(const DynamicArray<T,Alloc2>&,const Alloc1&) -> DynamicArray<T,Alloc1>;
+    template<typename T,typename Alloc1,typename Alloc2> DynamicArray(DynamicArray<T,Alloc2>&&,const Alloc1&) -> DynamicArray<T,Alloc1>;
 }
 
 #endif

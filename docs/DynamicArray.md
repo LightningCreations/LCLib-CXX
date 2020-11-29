@@ -41,6 +41,8 @@ namespace lclib::array{
     template<typename T,std::size_t N,typename Alloc> DynamicArray(const std::array<T,N>&,const Alloc&)->DynamicArray<T,Alloc>;
     template<typename T> DynamicArray(std::initializer_list<T>) -> DynamicArray<T>;
     template<typename T,typename Alloc> DynamicArray(std::initializer_list<T>,const Alloc&)->DynamicArray<T,Alloc>;
+    template<typename T,typename Alloc1,typename Alloc2> DynamicArray(const DynamicArray<T,Alloc2>&,const Alloc1&) -> DynamicArray<T,Alloc1>;
+    template<typename T,typename Alloc1,typename Alloc2> DynamicArray(DynamicArray<T,Alloc2>&&,const Alloc1&) -> DynamicArray<T,Alloc1>;
 }
 ```
 
@@ -65,9 +67,9 @@ template<typename T,typename Alloc=std::allocator<T>> struct DynamicArray{
 
     DynamicArray(const Alloc& alloc=Alloc());
     DynamicArray(const DynamicArray& arr);
-    DynamicArray(const DynamicArray& arr,const Alloc& alloc);
+    template<typename U,typename Alloc2> DynamicArray(const DynamicArray<U,Alloc2>& arr,const Alloc& alloc);
     DynamicArray(DynamicArray&& arr)noexcept;
-    DynamicArray(DynamicArray&& arr,const Alloc& alloc);
+    template<typename U,typename Alloc2> DynamicArray(DynamicArray<U,Alloc2>&& arr,const Alloc& alloc);
     template<std::size_t N> DynamicArray(const T(&)[N],const Alloc& alloc=Alloc());
     template<std::size_t N> DynamicArray(const std::array<T,N>&,const Alloc& alloc=Alloc());
     DynamicArray(std::initializer_list<T>,const Alloc& alloc=Alloc());
@@ -117,6 +119,7 @@ It shall be *Copy Assignable* if `std::allocator_traits<Alloc>::propagate_on_con
 
 `std::allocator_traits<Alloc>::value_type` shall be the same type as `T`. 
 
+If `T` is a reference type, function type, or (possibly cv-qualified) void, the program is ill-formed. 
 
 
 ### Typedefs
@@ -155,9 +158,9 @@ It shall be *Copy Assignable* if `std::allocator_traits<Alloc>::propagate_on_con
 ```c++
     DynamicArray(const Alloc& alloc=Alloc())noexcept; (1)
     DynamicArray(const DynamicArray& arr); (2)
-    DynamicArray(const DynamicArray& arr,const Alloc& alloc); (3)
+    template<typename U,typename Alloc2> DynamicArray(const DynamicArray<U,Alloc2>& arr,const Alloc& alloc); (3)
     DynamicArray(DynamicArray&& rhs)noexcept; (4)
-    DynamicArray(DynamicArray&& arr,const Alloc& alloc); (5)
+    template<typename U,typename Alloc2> DynamicArray(DynamicArray<U,Alloc2>&& arr,const Alloc& alloc); (5)
     template<std::size_t N> DynamicArray(const T(&arr)[N],const Alloc& alloc=Alloc()); (6)
     template<std::size_t N> DynamicArray(const std::array<T,N>& arr,const Alloc& alloc=Alloc()); (7)
     DynamicArray(std::initializer_list<T> list,const Alloc& alloc=Alloc()); (8)
@@ -175,15 +178,20 @@ It shall be *Copy Assignable* if `std::allocator_traits<Alloc>::propagate_on_con
     * `this->begin()==this->end()`,
     * `this->size()==0`
     * `this->get_allocator()==alloc`
+    * `DynamicArray(a1)==DynamicArray(a2)` given `T` is *EqualityComparable*, and `a1`, `a2` are expressions of type `Alloc`. 
 2. Copy constructs a new DynamicArray from an existing one. The allocator used is the one returned from `std::allocator_traits<Alloc>::select_on_container_copy_construction()` called on the `arr.get_allocator()`. 
     Post:
     * `(*this)==arr` Given `T` is *EqualityComparable*, and copy construction from `const T&` is *equality-preserving*. 
-3. Constructs a new DynamicArray from an existing one, with a specified allocator
+3. Constructs a new DynamicArray from an existing one, with a specified allocator. Does not participate in overload resolution unless `std::is_constructible_v<T,const U&>` is true.
+Pre:
+    * The behaviour is undefined if `rhs.size()` cannot be represented as a value of `size_type`. 
     Post:
-    * `(*this)==arr` Given `T` is *EqualityComparable*, and copy construction from `const T&` is *equality-preserving*. 
+    * If `U` is exactly `T`, `(*this)==arr` Given `T` is *EqualityComparable*, and copy construction from `const T&` is *equality-preserving*. 
     * `this->get_allocator()==alloc`
 4. Move constructs a new Dynamic Array from an existing one. `rhs` is left in a valid, but unspecified state.
-5. Constructs a new Dynamic Array from an existing one, using the specified allocator. `rhs` is left in a valid, but unspecified state.
+5. Constructs a new Dynamic Array from an existing one, using the specified allocator. `rhs` is left in a valid, but unspecified state.  Does not participate in overload resolution unless `std::is_constructible_v<T,U&&>` is true.
+    Pre:
+    * The behaviour is undefined if `rhs.size()` cannot be represented as a value of `size_type`. 
     Post:
     * `this->get_allocator()==alloc`
 6. Constructs a new Dynamic Array from a static array. 
@@ -192,22 +200,29 @@ It shall be *Copy Assignable* if `std::allocator_traits<Alloc>::propagate_on_con
     * `this->size()==N`
     * `std::equal(begin(*this),end(*this),begin(arr),end(arr))` Given `T` is *EqualityComparable*, and copy construction from `const T&` is *equality-preserving*. 
 7. Constructs a new Dynamic Array from a static array. 
+    Pre:
+    * The behaviour is undefined if `N` cannot be represented as a value of `size_type`. 
     Post:
     * `this->get_allocator()==alloc`
     * `this->size()==N`
     * `std::equal(begin(*this),end(*this),begin(arr),end(arr))` Given `T` is *EqualityComparable*, and copy construction from `const T&` is *equality-preserving*.
 8. Constructs a new Dynamic Array from an initializer list
+    Pre:
+    * The behaviour is undefined if `il.size()` cannot be represented as a value of `size_type`. 
     Post:
     * `this->get_allocator()==alloc`
     * `this->size()==il.size()`
     * `std::equal(begin(*this),end(*this),begin(il),end(il))` Given `T` is *EqualityComparable*, and copy construction from `const T&` is *equality-preserving*.
 9. Constructs an array of `size` default-constructed elements. If `Alloc` is the primary template of `std::allocator`, it is unspecified whether each element is value-initialized or default-initialized. Otherwise, each element is constructed by `std::allocator_traits<Alloc>::construct(ALLOC,ptr)`, where `ALLOC` is the constructed allocator of `this`, and `ptr` points to the element to be constructed.
-   Post:
-   * `this->get_allocator()=alloc`
-   * `this->size()==size`
+    Pre:
+    * The behaviour is undefined if `size` cannot be represented as a value of `size_type`. 
+    Post:
+    * `this->get_allocator()=alloc`
+    * `this->size()==size`
 10. Constructs a DynamicArray from the elements of a Collection. Only participates in overload resoltion if a call to the function `size`, on `std::forward<Container>(c)`, where the function `size` is looked up in the namespace `std`, and by ADL name resolution, and `T` is constructible from `R`, where `R` is the type obtained by dereferencing an iterator into `c`. 
     Pre:
     * The behaviour is undefined if iterators into `c` do not satisfy *InputIterator*, or `size(c)` elements cannot be reached from `begin(c)`, where both `begin` and `size` are looked up in the namespace `std` and by ADL name resolution. 
+    * The behaviour is undefined if `size(c)` cannot be represented as a value of `size_type`. 
     Post:
     * `this->get_allocator()==alloc`
     * `this->size()=size(c)` where `size` is looked up as above. 
@@ -236,6 +251,7 @@ In all cases, `rhs` is left in a valid, but unspecified state.
     * Construction of the elements of rhs shall not have been interrupted by an exception, if `std::allocator_traits<Alloc>::propagate_on_container_move_assignment` does not inherit from `std::true_type`
     Post:
     * Same as the constructor call noted above. 
+
 
 #### Exceptions
 
@@ -442,4 +458,6 @@ template<typename T,std::size_t N> DynamicArray(const std::array<T,N>&)->Dynamic
 template<typename T,std::size_t N,typename Alloc> DynamicArray(const std::array<T,N>&,const Alloc&)->DynamicArray<T,Alloc>;
 template<typename T> DynamicArray(std::initializer_list<T>) -> DynamicArray<T,std::allocator<T>>;
 template<typename T,typename Alloc> DynamicArray(std::initializer_list<T>,const Alloc&)->DynamicArray<T,Alloc>;
+template<typename T,typename Alloc1,typename Alloc2> DynamicArray(const DynamicArray<T,Alloc2>&,const Alloc1&) -> DynamicArray<T,Alloc1>;
+template<typename T,typename Alloc1,typename Alloc2> DynamicArray(DynamicArray<T,Alloc2>&&,const Alloc1&) -> DynamicArray<T,Alloc1>;
 ```
