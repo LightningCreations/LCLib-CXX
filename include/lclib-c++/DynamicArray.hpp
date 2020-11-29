@@ -15,6 +15,8 @@
 #include <compare>
 #endif
 
+#include <lclib-c++/bits/Helpers.hpp>
+
 namespace lclib::array{
 
     template<typename T,typename Alloc=std::allocator<T>> struct DynamicArray{
@@ -40,8 +42,9 @@ namespace lclib::array{
         Alloc _m_alloc;
     public:
         DynamicArray(const Alloc& alloc=Alloc()) noexcept(std::is_nothrow_copy_constructible_v<Alloc>) : _m_ptr{}, _m_size{},_m_constructed{},_m_alloc{alloc}{}
-        template<std::enable_if_t<std::is_copy_constructible_v<T>>* =nullptr> DynamicArray(const DynamicArray& a) : _m_size{a._m_size}, _m_ptr{}, _m_constructed{}, _m_alloc(std::allocator_traits<Alloc>::select_on_container_copy_construction(a._m_alloc)){
+        template<std::enable_if_t<std::is_copy_constructible_v<T>>* =nullptr> DynamicArray(const DynamicArray& a) : _m_size{}, _m_ptr{}, _m_constructed{}, _m_alloc(std::allocator_traits<Alloc>::select_on_container_copy_construction(a._m_alloc)){
             this->_m_ptr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,a._m_size);
+            this->_m_size = a._m_size;
             for(;_m_constructed<_m_size;_m_constructed++){
                 std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+_m_constructed,a[_m_constructed]);
             }
@@ -49,6 +52,7 @@ namespace lclib::array{
 
         template<std::enable_if_t<std::is_copy_constructible_v<T>>* =nullptr> DynamicArray(const DynamicArray& a,const Alloc& alloc) : _m_size{}, _m_ptr{}, _m_constructed{}, _m_alloc(alloc){
             this->_m_ptr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,a._m_size);
+            this->_m_size = a._m_size;
             for(;_m_constructed<_m_size;_m_constructed++){
                 std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+_m_constructed,a[_m_constructed]);
             }
@@ -56,34 +60,39 @@ namespace lclib::array{
 
         template<std::enable_if_t<std::is_move_constructible_v<T>>* =nullptr> DynamicArray(DynamicArray&& a,const Alloc& alloc) : _m_size{}, _m_ptr{}, _m_constructed{}, _m_alloc(alloc){
             this->_m_ptr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,a._m_size);
+            this->_m_size = a._m_size;
             for(;_m_constructed<_m_size;_m_constructed++){
                 std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+_m_constructed,std::move(a[_m_constructed]));
             }
         }
 
-        template<std::size_t N,std::enable_if_t<std::is_copy_constructible_v<T>>* =nullptr> DynamicArray(const T(&a)[N],const Alloc& alloc=Alloc()) : _m_size{N}, _m_ptr{}, _m_constructed{}, _m_alloc(alloc){
+        template<std::size_t N,std::enable_if_t<std::is_copy_constructible_v<T>>* =nullptr> DynamicArray(const T(&a)[N],const Alloc& alloc=Alloc()) : _m_size{}, _m_ptr{}, _m_constructed{}, _m_alloc(alloc){
             this->_m_ptr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,N);
+            this->_m_size = N;
             for(;_m_constructed<_m_size;_m_constructed++){
                 std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+_m_constructed,a[_m_constructed]);
             }
         }
 
-        template<std::size_t N,std::enable_if_t<std::is_copy_constructible_v<T>>* =nullptr> DynamicArray(const std::array<T,N>& a,const Alloc& alloc=Alloc()) : _m_size{N}, _m_ptr{}, _m_constructed{}, _m_alloc(alloc){
+        template<std::size_t N,std::enable_if_t<std::is_copy_constructible_v<T>>* =nullptr> DynamicArray(const std::array<T,N>& a,const Alloc& alloc=Alloc()) : _m_size{}, _m_ptr{}, _m_constructed{}, _m_alloc(alloc){
             this->_m_ptr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,N);
+            this->_m_size = N;
             for(;_m_constructed<_m_size;_m_constructed++){
                 std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+_m_constructed,a[_m_constructed]);
             }
         }
 
-        template<std::size_t N,std::enable_if_t<std::is_copy_constructible_v<T>>* =nullptr> DynamicArray(const std::array<const T,N>& a,const Alloc& alloc=Alloc()) : _m_size{N}, _m_ptr{}, _m_constructed{}, _m_alloc(alloc){
+        template<std::size_t N,std::enable_if_t<std::is_copy_constructible_v<T>>* =nullptr> DynamicArray(const std::array<const T,N>& a,const Alloc& alloc=Alloc()) : _m_size{}, _m_ptr{}, _m_constructed{}, _m_alloc(alloc){
             this->_m_ptr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,N);
+            this->_m_size = N;
             for(;_m_constructed<_m_size;_m_constructed++){
                 std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+_m_constructed,a[_m_constructed]);
             }
         }
 
-        template<std::enable_if_t<std::is_copy_constructible_v<T>>* =nullptr> DynamicArray(const std::initializer_list<T>& il,const Alloc& alloc = Alloc())  : _m_size{il.size()}, _m_ptr{}, _m_constructed{}, _m_alloc(alloc){
+        template<std::enable_if_t<std::is_copy_constructible_v<T>>* =nullptr> DynamicArray(const std::initializer_list<T>& il,const Alloc& alloc = Alloc())  : _m_size{}, _m_ptr{}, _m_constructed{}, _m_alloc(alloc){
             this->_m_ptr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,_m_size);
+            this->_m_size = il.size();
             for(;_m_constructed<_m_size;_m_constructed++){
                 std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+_m_constructed,il.begin()[_m_constructed]);
             }
@@ -93,6 +102,32 @@ namespace lclib::array{
             ,_m_size(std::exchange(a._m_size,0)), _m_alloc{std::move(a._m_alloc)}, _m_constructed(a._m_constructed){}
 
 
+        template<std::enable_if_t<std::is_default_constructible_v<T>>* =nullptr> DynamicArray(size_type n,const Alloc& alloc = Alloc()) 
+            : _m_ptr{}, _m_size{}, _m_constructed{}, _m_alloc(alloc){
+                this->_m_ptr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,n);
+                this->_m_size = n;
+                for(;_m_constructed<_m_size;_m_constructed++)
+                    std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+this->_m_size); 
+            }
+        
+        template<typename Container,std::enable_if_t<std::is_constructible_v<T,decltype(* _detail::customization::adl_and_std::begin(std::declval<Container>()))>>* =nullptr,
+            std::void_t<decltype(_detail::customization::adl_and_std::size(std::declval<Container>()))>* =nullptr>
+            explicit DynamicArray(Container&& container,const Alloc& alloc = Alloc()) : _m_ptr{}, _m_size(_detail::customization::adl_and_std::size(std::forward<Container>(container))), _m_constructed{}, _m_alloc{alloc}{
+                _m_ptr = std::allocator_traits<Alloc>::allocate(_m_alloc,_m_size);
+                auto iter = _detail::customization::adl_and_std::begin(std::forward<Container>(container));
+                for(;_m_constructed<_m_size;_m_constructed++,iter++)
+                    std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+this->_m_constructed,*iter);
+
+            }
+        
+        template<typename ForwardIterator,std::enable_if_t<
+            std::is_base_of_v<std::forward_iterator_tag,typename std::iterator_traits<ForwardIterator>::iterator_category>>* =nullptr,
+            std::enable_if_t<std::is_constructible_v<T,typename std::iterator_traits<ForwardIterator>::reference>>* = nullptr>
+            DynamicArray(ForwardIterator begin,ForwardIterator end,const Alloc& alloc=Alloc()) : _m_ptr{},_m_size(std::distance(begin,end)),_m_constructed{}, _m_alloc{alloc}{
+                 _m_ptr = std::allocator_traits<Alloc>::allocate(_m_alloc,_m_size);
+                for(;_m_constructed<_m_size;_m_constructed++,begin++)
+                    std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+this->_m_constructed,*begin);
+            }
 
         ~DynamicArray(){
             if(_m_ptr){
@@ -279,42 +314,66 @@ namespace lclib::array{
         friend auto crend(const DynamicArray& a)noexcept{
             return a.crend();
         }
+
+        friend auto data(DynamicArray& a)noexcept{
+            return a.data();
+        }
+
+        friend auto data(const DynamicArray& a)noexcept{
+            return a.data();
+        }
+
+        friend auto size(const DynamicArray& a)noexcept{
+            return a.size();
+        }
+
+        const Alloc& get_allocator()const noexcept{
+            return this->_m_alloc;
+        }
     };
 
-    template<typename T,std::void_t<decltype(std::declval<const T&>()==std::declval<const T&>())>* =nullptr>
-        bool operator==(const DynamicArray<T>& a1,const DynamicArray<T>& a2) noexcept(noexcept(a1[0]==a2[0])){
+    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()==std::declval<const T&>())>* =nullptr>
+        bool operator==(const DynamicArray<T,Alloc1>& a1,const DynamicArray<T,Alloc2>& a2) noexcept(noexcept(a1[0]==a2[0])){
             return std::equal(begin(a1),end(a1),begin(a2),end(a2));
         }
 
 #ifdef LCLIB_CXX_HAS_20_SPACESHIP
-    template<typename T,std::void_t<decltype(std::declval<const T&>()<=>std::declval<const T&>())>* =nullptr>
-        auto operator<=>(const DynamicArray<T>& a1,const DynamicArray<T>& a2){
+    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()<=>std::declval<const T&>())>* =nullptr>
+        auto operator<=>(const DynamicArray<T,Alloc1>& a1,const DynamicArray<T,Alloc2>& a2){
             return std::lexicographical_compare_three_way(begin(a1),end(a1),begin(a2),end(a2));
         }
 #else
-    template<typename T,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>())>* =nullptr>
-        bool operator<(const DynamicArray<T>& a1,const DynamicArray<T>& a2) noexcept(noexcept(a1[0]<a2[0])){
-            return std::lexicographical_compare(begin(a1),end(a1),begin(a2),end(a2));
-        }
-
-    template<typename T,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>())>* =nullptr>
-        bool operator>(const DynamicArray<T>& a1,const DynamicArray<T>& a2) noexcept(noexcept(a1[0]<a2[0])){
-            return a2<a1;
-        }
-
-    template<typename T,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>()||std::declval<const T&>()==std::declval<const T&>())>* =nullptr>
-        bool operator<=(const DynamicArray<T>& a1,const DynamicArray<T>& a2) noexcept(noexcept(a1[0]<a2[0]||a1[0]==a2[0])){
-            return a1<a2||a1==a2;
-        }
-    template<typename T,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>()||std::declval<const T&>()==std::declval<const T&>())>* =nullptr>
-        bool operator>=(const DynamicArray<T>& a1,const DynamicArray<T>& a2) noexcept(noexcept(a1[0]<a2[0]||a1[0]==a2[0])){
-            return a1>a2||a1==a2;
-        }
-    template<typename T,std::void_t<decltype(std::declval<const T&>()==std::declval<const T&>())>* =nullptr>
-        bool operator!=(const DynamicArray<T>& a1,const DynamicArray<T>& a2) noexcept(noexcept(a1==a2)){
+    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()==std::declval<const T&>())>* =nullptr>
+        bool operator!=(const DynamicArray<T,Alloc1>& a1,const DynamicArray<T,Alloc2>& a2) noexcept(noexcept(a1==a2)){
             return !(a1==a2);
         }
 #endif
+
+    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>())>* =nullptr>
+        bool operator<(const DynamicArray<T,Alloc1>& a1,const DynamicArray<T,Alloc2>& a2) noexcept(noexcept(a1[0]<a2[0])){
+            return std::lexicographical_compare(begin(a1),end(a1),begin(a2),end(a2));
+        }
+
+    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>())>* =nullptr>
+        bool operator>(const DynamicArray<T,Alloc1>& a1,const DynamicArray<T,Alloc2>& a2) noexcept(noexcept(a1[0]<a2[0])){
+            return a2<a1;
+        }
+
+    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>()||std::declval<const T&>()==std::declval<const T&>())>* =nullptr>
+        bool operator<=(const DynamicArray<T,Alloc1>& a1,const DynamicArray<T,Alloc2>& a2) noexcept(noexcept(a1[0]<a2[0]||a1[0]==a2[0])){
+            return a1<a2||a1==a2;
+        }
+    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>()||std::declval<const T&>()==std::declval<const T&>())>* =nullptr>
+        bool operator>=(const DynamicArray<T,Alloc1>& a1,const DynamicArray<T,Alloc2>& a2) noexcept(noexcept(a1[0]<a2[0]||a1[0]==a2[0])){
+            return a1>a2||a1==a2;
+        }
+
+    template<typename T,std::size_t N> DynamicArray(const T(&)[N])->DynamicArray<T>;
+    template<typename T,std::size_t N,typename Alloc> DynamicArray(const T(&)[N],const Alloc&)->DynamicArray<T,Alloc>;
+    template<typename T,std::size_t N> DynamicArray(const std::array<T,N>&)->DynamicArray<T>;
+    template<typename T,std::size_t N,typename Alloc> DynamicArray(const std::array<T,N>&,const Alloc&)->DynamicArray<T,Alloc>;
+    template<typename T> DynamicArray(std::initializer_list<T>) -> DynamicArray<T>;
+    template<typename T,typename Alloc> DynamicArray(std::initializer_list<T>,const Alloc&)->DynamicArray<T,Alloc>;
 }
 
 #endif

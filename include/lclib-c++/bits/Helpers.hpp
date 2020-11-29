@@ -17,79 +17,97 @@ namespace lclib{
                              }
 
                         template<typename T>
-                            auto begin_(T& t) noexcept(noexcept(begin(t))) -> decltype(begin(t)){
-                                return begin(t);
+                            decltype(auto) begin_(T&& t) noexcept(noexcept(begin(std::forward<T>(t)))){
+                                return begin(std::forward<T>(t));
                             } 
 
                         template<typename T>
-                            auto end_(T& t) noexcept(noexcept(end(t))) -> decltype(end(t)){
-                                return end(t);
+                            decltype(auto) end_(T&& t) noexcept(noexcept(end(std::forward<T>(t)))){
+                                return end(std::forward<T>(t));
                             }
                         template<typename T>
-                            auto cbegin_(const T& t) noexcept(noexcept(cbegin(t))) -> decltype(cbegin(t)){
+                            auto cbegin_(const T& t) noexcept(noexcept(cbegin(t))){
                                 return cbegin(t);
                             }
                         template<typename T>
-                            auto cend_(T& t) noexcept(noexcept(cend(t))) -> decltype(cend(t)){
+                            decltype(auto) cend_(const T& t) noexcept(noexcept(cend(t))){
                                 return cend(t);
                             }
                         
                         template<typename T>
-                            auto rbegin_(T& t) noexcept(noexcept(rbegin(t))) -> decltype(rbegin(t)){
-                                return rbegin(t);
+                            decltype(auto) rbegin_(T&& t) noexcept(noexcept(rbegin(std::forward<T>(t)))){
+                                return rbegin(std::forward<T>(t));
                             } 
 
                         template<typename T>
-                            auto rend_(T& t) noexcept(noexcept(rend(t))) -> decltype(rend(t)){
-                                return end(t);
+                            decltype(auto) rend_(T&& t) noexcept(noexcept(rend(std::forward<T>(t)))){
+                                return rend(std::forward<T>(t));
                             }
                         template<typename T>
-                            auto crbegin_(const T& t) noexcept(noexcept(crbegin(t))) -> decltype(crbegin(t)){
+                            decltype(auto) crbegin_(const T& t) noexcept(noexcept(crbegin(t))){
                                 return crbegin(t);
                             }
                         template<typename T>
-                            auto crend_(const T& t) noexcept(noexcept(crend(t))) -> decltype(crend(t)){
+                            decltype(auto) crend_(const T& t) noexcept(noexcept(crend(t))){
                                 return crend(t);
+                            }
+
+                        template<typename T>
+                            decltype(auto) size_(const T& t) noexcept(noexcept(size(t))){
+                                return size(t);
+                            }
+
+                        template<typename T>
+                            decltype(auto) data_(T&& t) noexcept(noexcept(data(std::forward<T>(t)))){
+                                return data(std::forward<T>(t));
                             }
                     }
                 }
-                constexpr auto swap = [](auto& a,auto& b) noexcept(noexcept(_detail::_adl::swap_(a,b)))
-                -> decltype(_detail::_adl::swap_(a,b)){
-                    _detail::_adl::swap_(a,b);
-                };
+                template<typename T> decltype(_detail::_adl::begin_(std::declval<T>())) begin(T&& t) noexcept(noexcept(_detail::_adl::begin_(std::forward<T>(t)))){
+                    return _detail::_adl::begin_(t);
+                }
 
-                constexpr auto begin = [](auto& a) noexcept(noexcept(_detail::_adl::begin_(a)))
-                -> decltype(_detail::_adl::begin_(a)){
-                    return _detail::_adl::begin_(a);
-                };
-                constexpr auto end = [](auto& a) noexcept(noexcept(_detail::_adl::end_(a)))
-                -> decltype(_detail::_adl::end_(a)){
-                    return _detail::_adl::end_(a);
-                };
-                constexpr auto cbegin = [](const auto& a) noexcept(noexcept(_detail::_adl::cbegin_(a)))
-                -> decltype(_detail::_adl::cbegin_(a)){
-                    return _detail::_adl::cbegin_(a);
-                };
-                constexpr auto cend = [](const auto& a) noexcept(noexcept(_detail::_adl::cend_(a)))
-                -> decltype(_detail::_adl::cend_(a)){
-                    return _detail::_adl::cend_(a);
-                };
-                constexpr auto rbegin = [](auto& a) noexcept(noexcept(_detail::_adl::rbegin_(a)))
-                -> decltype(_detail::_adl::rbegin_(a)){
-                    return _detail::_adl::rbegin_(a);
-                };
-                constexpr auto rend = [](auto& a) noexcept(noexcept(_detail::_adl::rend_(a)))
-                -> decltype(_detail::_adl::rend_(a)){
-                    return _detail::_adl::rend_(a);
-                };
-                constexpr auto crbegin = [](const auto& a) noexcept(noexcept(_detail::_adl::crbegin_(a)))
-                -> decltype(_detail::_adl::crbegin_(a)){
-                    return _detail::_adl::crbegin_(a);
-                };
-                constexpr auto crend = [](const auto& a) noexcept(noexcept(_detail::_adl::crend_(a)))
-                -> decltype(_detail::_adl::crend_(a)){
-                    return _detail::_adl::crend_(a);
-                };
+                template<typename T> decltype(_detail::_adl::end_(std::declval<T>())) end(T&& t) noexcept(noexcept(_detail::_adl::end_(std::forward<T>(t)))){
+                    return _detail::_adl::end_(t);
+                }
+
+                template<typename T> decltype(_detail::_adl::cbegin_(std::declval<const T&>())) cbegin(const T& t) noexcept(noexcept(_detail::_adl::cbegin_(t))){
+                    return _detail::_adl::cbegin_(t);
+                }
+
+                template<typename T> decltype(_detail::_adl::cend_(std::declval<const T&>())) cend(const T& t) noexcept(noexcept(_detail::_adl::cend_(t))){
+                    return _detail::_adl::cend_(t);
+                }
+
+                template<typename T> decltype(_detail::_adl::rbegin_(std::declval<T>())) rbegin(T&& t) noexcept(noexcept(_detail::_adl::rbegin_(std::forward<T>(t)))){
+                    return _detail::_adl::rbegin_(t);
+                }
+
+                template<typename T> decltype(_detail::_adl::rend_(std::declval<T>())) rend(T&& t) noexcept(noexcept(_detail::_adl::rend_(std::forward<T>(t)))){
+                    return _detail::_adl::end_(t);
+                }
+
+                template<typename T> decltype(_detail::_adl::crbegin_(std::declval<const T&>())) crbegin(const T& t) noexcept(noexcept(_detail::_adl::crbegin_(t))){
+                    return _detail::_adl::crbegin_(t);
+                }
+
+                template<typename T> decltype(_detail::_adl::crend_(std::declval<const T&>())) crend(const T& t) noexcept(noexcept(_detail::_adl::crend_(t))){
+                    return _detail::_adl::crend_(t);
+                }
+
+                template<typename T,typename U> decltype(_detail::_adl::swap_(std::declval<T&>(),std::declval<U&>())) swap(T& t,U& u) noexcept(noexcept(_detail::_adl::swap_(t,u))){
+                    return _detail::_adl::swap_(t,u);
+                }
+
+                template<typename T> decltype(_detail::_adl::size_(std::declval<const T&>())) size(const T& t) noexcept(noexcept(_detail::_adl::size_(t))){
+                    return _detail::_adl::size_(t);
+                }
+
+                template<typename T> decltype(_detail::_adl::data_(std::declval<T>())) data(T&& t) noexcept(noexcept(_detail::_adl::data_(std::forward<T>(t)))){
+                    return _detail::_adl::data_(std::forward<T>(t));
+                }
+
+
             }
             namespace adl_only{
                 namespace _detail{
@@ -109,79 +127,95 @@ namespace lclib{
                              }
 
                         template<typename T>
-                            auto begin_(T& t) noexcept(noexcept(begin(t))) -> decltype(begin(t)){
-                                return begin(t);
+                            decltype(end(std::declval<T>())) begin_(T&& t) noexcept(noexcept(begin(std::forward<T>(t)))){
+                                return begin(std::forward<T>(t));
                             } 
 
                         template<typename T>
-                            auto end_(T& t) noexcept(noexcept(end(t))) -> decltype(end(t)){
-                                return end(t);
+                            decltype(end(std::declval<T>())) end_(T&& t) noexcept(noexcept(end(std::forward<T>(t)))){
+                                return end(std::forward<T>(t));
                             }
                         template<typename T>
-                            auto cbegin_(const T& t) noexcept(noexcept(cbegin(t))) -> decltype(cbegin(t)){
+                            decltype(cbegin(std::declval<const T&>())) cbegin_(const T& t) noexcept(noexcept(cbegin(t))){
                                 return cbegin(t);
                             }
                         template<typename T>
-                            auto cend_(T& t) noexcept(noexcept(cend(t))) -> decltype(cend(t)){
+                            decltype(cend(std::declval<const T&>())) cend_(const T& t) noexcept(noexcept(cend(t))){
                                 return cend(t);
                             }
                         
                         template<typename T>
-                            auto rbegin_(T& t) noexcept(noexcept(rbegin(t))) -> decltype(rbegin(t)){
-                                return rbegin(t);
+                            decltype(rbegin(std::declval<T>())) rbegin_(T&& t) noexcept(noexcept(rbegin(std::forward<T>(t)))){
+                                return rbegin(std::forward<T>(t));
                             } 
 
                         template<typename T>
-                            auto rend_(T& t) noexcept(noexcept(rend(t))) -> decltype(rend(t)){
-                                return end(t);
+                            decltype(rend(std::declval<T>())) rend_(T&& t) noexcept(noexcept(rend(std::forward<T>(t)))){
+                                return rend(std::forward<T>(t));
                             }
                         template<typename T>
-                            auto crbegin_(const T& t) noexcept(noexcept(crbegin(t))) -> decltype(crbegin(t)){
+                            decltype(crbegin(std::declval<const T&>())) crbegin_(const T& t) noexcept(noexcept(crbegin(t))){
                                 return crbegin(t);
                             }
                         template<typename T>
-                            auto crend_(const T& t) noexcept(noexcept(crend(t))) -> decltype(crend(t)){
+                            decltype(crend(std::declval<const T&>())) crend_(const T& t) noexcept(noexcept(crend(t))){
                                 return crend(t);
+                            }
+
+                        template<typename T>
+                            decltype(auto) size_(const T& t) noexcept(noexcept(size(t))){
+                                return size(t);
+                            }
+
+                        template<typename T>
+                            decltype(auto) data_(T&& t) noexcept(noexcept(data(std::forward<T>(t)))){
+                                return data(std::forward<T>(t));
                             }
                     }
                 }
-                constexpr auto swap = [](auto& a,auto& b) noexcept(noexcept(_detail::_adl::swap_(a,b)))
-                -> decltype(_detail::_adl::swap_(a,b)){
-                    _detail::_adl::swap_(a,b);
-                };
+                template<typename T> decltype(_detail::_adl::begin_(std::declval<T>())) begin(T&& t) noexcept(noexcept(_detail::_adl::begin_(std::forward<T>(t)))){
+                    return _detail::_adl::begin_(t);
+                }
 
-                constexpr auto begin = [](auto& a) noexcept(noexcept(_detail::_adl::begin_(a)))
-                -> decltype(_detail::_adl::begin_(a)){
-                    return _detail::_adl::begin_(a);
-                };
-                constexpr auto end = [](auto& a) noexcept(noexcept(_detail::_adl::end_(a)))
-                -> decltype(_detail::_adl::end_(a)){
-                    return _detail::_adl::end_(a);
-                };
-                constexpr auto cbegin = [](const auto& a) noexcept(noexcept(_detail::_adl::cbegin_(a)))
-                -> decltype(_detail::_adl::cbegin_(a)){
-                    return _detail::_adl::cbegin_(a);
-                };
-                constexpr auto cend = [](const auto& a) noexcept(noexcept(_detail::_adl::cend_(a)))
-                -> decltype(_detail::_adl::cend_(a)){
-                    return _detail::_adl::cend_(a);
-                };
-                constexpr auto rbegin = [](auto& a) noexcept(noexcept(_detail::_adl::rbegin_(a)))
-                -> decltype(_detail::_adl::rbegin_(a)){
-                    return _detail::_adl::rbegin_(a);
-                };
-                constexpr auto rend = [](auto& a) noexcept(noexcept(_detail::_adl::rend_(a)))
-                -> decltype(_detail::_adl::rend_(a)){
-                    return _detail::_adl::rend_(a);
-                };
-                constexpr auto crbegin = [](const auto& a) noexcept(noexcept(_detail::_adl::crbegin_(a)))
-                -> decltype(_detail::_adl::crbegin_(a)){
-                    return _detail::_adl::crbegin_(a);
-                };
-                constexpr auto crend = [](const auto& a) noexcept(noexcept(_detail::_adl::crend_(a)))
-                -> decltype(_detail::_adl::crend_(a)){
-                    return _detail::_adl::crend_(a);
-                };
+                template<typename T> decltype(_detail::_adl::end_(std::declval<T>())) end(T&& t) noexcept(noexcept(_detail::_adl::end_(std::forward<T>(t)))){
+                    return _detail::_adl::end_(t);
+                }
+
+                template<typename T> decltype(_detail::_adl::cbegin_(std::declval<const T&>())) cbegin(const T& t) noexcept(noexcept(_detail::_adl::cbegin_(t))){
+                    return _detail::_adl::cbegin_(t);
+                }
+
+                template<typename T> decltype(_detail::_adl::cend_(std::declval<const T&>())) cend(const T& t) noexcept(noexcept(_detail::_adl::cend_(t))){
+                    return _detail::_adl::cend_(t);
+                }
+
+                template<typename T> decltype(_detail::_adl::rbegin_(std::declval<T>())) rbegin(T&& t) noexcept(noexcept(_detail::_adl::rbegin_(std::forward<T>(t)))){
+                    return _detail::_adl::rbegin_(t);
+                }
+
+                template<typename T> decltype(_detail::_adl::rend_(std::declval<T>())) rend(T&& t) noexcept(noexcept(_detail::_adl::rend_(std::forward<T>(t)))){
+                    return _detail::_adl::end_(t);
+                }
+
+                template<typename T> decltype(_detail::_adl::crbegin_(std::declval<const T&>())) crbegin(const T& t) noexcept(noexcept(_detail::_adl::crbegin_(t))){
+                    return _detail::_adl::crbegin_(t);
+                }
+
+                template<typename T> decltype(_detail::_adl::crend_(std::declval<const T&>())) crend(const T& t) noexcept(noexcept(_detail::_adl::crend_(t))){
+                    return _detail::_adl::crend_(t);
+                }
+
+                template<typename T,typename U> decltype(_detail::_adl::swap_(std::declval<T&>(),std::declval<U&>())) swap(T& t,U& u) noexcept(noexcept(_detail::_adl::swap_(t,u))){
+                    return _detail::_adl::swap_(t,u);
+                }
+
+                template<typename T> decltype(_detail::_adl::size_(std::declval<const T&>())) size(const T& t) noexcept(noexcept(_detail::_adl::size_(t))){
+                    return _detail::_adl::size_(t);
+                }
+
+                template<typename T> decltype(_detail::_adl::data_(std::declval<T>())) data(T&& t) noexcept(noexcept(_detail::_adl::data_(std::forward<T>(t)))){
+                    return _detail::_adl::data_(std::forward<T>(t));
+                }
             }
 
         }
