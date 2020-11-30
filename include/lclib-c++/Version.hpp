@@ -44,22 +44,22 @@ namespace lclib::version{
         constexpr bool operator==(const Version&)const noexcept = default;
 #else
         constexpr bool operator<(const Version& v)const noexcept{
-            return std::tie(this->major,this->minor)<std::tie(v.major,v.minor);
+            return std::tie(this->_major,this->_minor)<std::tie(v._major,v._minor);
         }
         constexpr bool operator==(const Version& v)const noexcept{
-            return std::tie(this->major,this->minor)==std::tie(v.major,v.minor);
+            return std::tie(this->_major,this->_minor)==std::tie(v._major,v._minor);
         }
         constexpr bool operator!=(const Version& v)const noexcept{
-            return std::tie(this->major,this->minor)!=std::tie(v.major,v.minor);
+            return std::tie(this->_major,this->_minor)!=std::tie(v._major,v._minor);
         }
         constexpr bool operator>(const Version& v)const noexcept{
-            return std::tie(this->major,this->minor)>std::tie(v.major,v.minor);
+            return std::tie(this->_major,this->_minor)>std::tie(v._major,v._minor);
         }
         constexpr bool operator<=(const Version& v)const noexcept{
-            return std::tie(this->major,this->minor)<=std::tie(v.major,v.minor);
+            return std::tie(this->_major,this->_minor)<=std::tie(v._major,v._minor);
         }
         constexpr bool operator>=(const Version& v)const noexcept{
-            return std::tie(this->major,this->minor)>=std::tie(v.major,v.minor);
+            return std::tie(this->_major,this->_minor)>=std::tie(v._major,v._minor);
         }
 #endif
         LCLIB_CXX_API friend io::DataInputStream& operator>>(io::DataInputStream&,Version&);
