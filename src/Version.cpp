@@ -7,12 +7,12 @@
 
 namespace lclib::version{
     io::DataInputStream& operator>>(io::DataInputStream& in,Version& v){
-        in >> v.major >> v.minor;
+        in >> v._major >> v._minor;
 
         return in;
     }
     io::DataOutputStream& operator<<(io::DataOutputStream& out,const Version& v){
-        out << v.major << v.minor;
+        out << v._major << v._minor;
 
         return out;
     }
