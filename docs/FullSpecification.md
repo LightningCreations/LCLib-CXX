@@ -52,18 +52,18 @@ This document is released under the terms of the GNU Free Documentation License,
 
 2. Certain constructs of this specification, or of the C++ Standard in Use, are described as *implementation-defined*. These are parameters of the Abstract machine. Implementations shall document the particular values of these parameters.
 3. _Note 1 - This specification typically constrains such_ implementation-defined _behaviour. Any behaviour that is described as_ implementation-defined _by the C++ Standard in Use may be further constrained by this specification - End Note_
-5. Certain constructs of this specification, or of the C++ Standard in Use, are described as *unspecified*. These are non-deterministic aspects of the abstract machine.
-6. _Note 3 - This specification typically constrains such_ unspecified _behaviour. Any behaviour which is described as _ unspecified _by the C++ Standard in Use may be further constrained by this specification - End Note_
-7. Certain other constructs of this specification, or of the C++ Standard in Use, are described as *undefined*.
-8. _Note 4 - This specification imposes no limitations on any such behaviour - End Note_
-9. During evaluation of a correct program, an implementation shall ensure that the *observable behaviour* of the program, matches the *observable behaviour* of one possible result of the current parameterized abstract machine. 
-10. During evaluation of a well-formed program that has undefined behaviour, or of an ill-formed program, no limitations are imposed on the result of that evaluation.
-11. _Note 5 - The above includes the observable behaviour of programs before the first occurance of an undefined operation - End Note_
-12. The observable behaviour of a program shall include the following:
+4. Certain constructs of this specification, or of the C++ Standard in Use, are described as *unspecified*. These are non-deterministic aspects of the abstract machine.
+5. _Note 2 - This specification typically constrains such_ unspecified _behaviour. Any behaviour which is described as_  unspecified _by the C++ Standard in Use may be further constrained by this specification - End Note_
+4. Certain other constructs of this specification, or of the C++ Standard in Use, are described as *undefined*.
+5. _Note 3 - This specification imposes no limitations on any such behaviour - End Note_
+6. During evaluation of a correct program, an implementation shall ensure that the *observable behaviour* of the program, matches the *observable behaviour* of one possible result of the current parameterized abstract machine. 
+7. During evaluation of a well-formed program that has undefined behaviour, or of an ill-formed program, no limitations are imposed on the result of that evaluation.
+8. _Note 5 - The above includes the observable behaviour of programs before the first occurance of an undefined operation - End Note_
+9. The observable behaviour of a program shall include the following:
     * Any operation that is described as having observable behaviour by the C++ Standard in Use
     * Any operation that is explicited denoted by this specification as having observable behaviour
 
-13. _Note 6 - The requirements of this section do not prevent an implementation from enforcing stricter requirements on the evaluation of programs. - End Note_
+10. _Note 6 - The requirements of this section do not prevent an implementation from enforcing stricter requirements on the evaluation of programs. - End Note_
 
 ### §1.3.2 Constrained Operations [intro.constrained]
 
