@@ -6,7 +6,7 @@ Drafted By Connor Horman
 
 Copyright (C) 2020 Lightning Creations and Connor Horman
 
-This document is released under the terms of the GNU Free Documentation License, with no front-cover texts, no back-cover texts, and no invariant sections. See §17 for details.
+This document is released under the terms of the GNU Free Documentation License, with no front-cover texts, no back-cover texts, and no invariant sections. 
 
 ## §1 Introduction [intro]
 
