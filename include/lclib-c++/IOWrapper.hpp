@@ -300,6 +300,7 @@ namespace lclib::io{
                     for(const T& t:arr)
                         (*this) << t;
                 }
+                return *this;
             }
     };
     template<typename DOutput,typename T,
