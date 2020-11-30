@@ -253,11 +253,24 @@ Additionally, the template may impose any additional constraints on specializati
 A program may define a partial specialization of any template,
  provided any instantiation of the partial specialization satisfies the above requirements.
 
-A program may additionally not define partial or full specializations of 
+A program additionally may not define partial or full specializations of 
  any type in the C++ Standard Library in violation of these rules (though is not exclusively permitted to do so under these rules), except that the primary template rule does not apply.
 
-The behaviour of a program that specializes a template defined by this specification
- in violation of these rules is undefined. 
+The behaviour of a program that specializes a template defined by this specification or the C++ Standard in violation of these rules, is undefined. 
+
+
+## Named Requirements
+
+This specification may reference a number of named requirements defined by the C++ Standard, as well as others defined by this specification. 
+
+Each type in this library may satisfy any number of these requirements as listed. 
+Any type in this library may satisfy any other requirements, that does not alter the API of the type. Whether or not a type satisfies these additional requirements is unspecified. 
+
+_Note - This implies that, for example, the value of `std::is_standard_layout_t<T>`, where `T` is a type in this library that is not defined to be a_ Standard-layout type _is not part of the API, and any particular value cannot be relied upon by users of the API - End Note_
+
+Any type in this library which does not have an destructor which is explicitly defined as deleted satsifies the requirements of *Destructible*. _Note - The destructor of all types in this library is `noexcept(true)` - End Note_
+Any type in this library that defines a copy constructor, move constructor, copy assignment, or move assignment operator, except as deleted, satisfies *CopyConstructible*, *MoveConstructible*, *CopyAssignable*, and *MoveAssignable*, respectively. _Note - this implies that no type in this library defines a Copy Constructor or Copy Assignment operator that takes only `T&` - End Note_
+
 
 
 
