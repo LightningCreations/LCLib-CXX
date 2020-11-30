@@ -78,7 +78,7 @@ namespace std{
         std::size_t operator()(lclib::version::Version v)const {
             return std::hash<const unsigned char*>{}(&lclib::version::_detail::seed)^(static_cast<std::size_t>(v._major)*257+v._minor);
         }
-    }
+    };
 }
 
 #endif //LCLIB_VERSION_HPP
