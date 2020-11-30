@@ -7,9 +7,8 @@ Provides types to serialize `std::chrono` types to LCLib Binary IO Compatible fo
 ## Deprecation of Uses
 
 Note: Prior versions of LCLib-C++ provided these as a standard interface similar to the `java.time` classes Duration and Instant. 
-However, review of the usefulness as a primary timekeeping library has shown that the utilities of `std::chrono` 
- are usually sufficient, and sometimes optimal.
- LCLib-C++ deprecates the use of this library except when necessary for serialization. 
+However, review of the usefulness as a primary timekeeping library has shown that the utilities of `std::chrono` are usually sufficient, and sometimes optimal.
+ LCLib-C++ deprecates the use of this library for serializing `std::chrono`. 
 
 
 ## Library Synopsis
