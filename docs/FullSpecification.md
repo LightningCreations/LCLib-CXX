@@ -34,8 +34,8 @@ This document is released under the terms of the GNU Free Documentation License,
 7. This specification, refers to this document, either as a Draft for the LCS Project, or as a publication. 
 8. The term "shall" refers to an absolute requirement of this specification on either the implementation or on a program. 
 9. The term "shall not" is the inverse of "shall" and refers to an absolute prohibition of this specification on either the implementation or on a program. 
-10. A Well-formed program, is a program that is well-formed program under the C++ Standard in Use and does not violate any requirements or prohibitions of this specification. 
-11. An Ill-formed program is a program that is not a well-formed program.
+10. A well-formed program, is a program that is well-formed program under the C++ Standard in Use and does not violate any requirements or prohibitions of this specification. 
+11. An ill-formed program is a program that is not a well-formed program.
 
 ### §1.3 Compliance [intro.compliance]
 
