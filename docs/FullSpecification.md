@@ -66,7 +66,7 @@ This document is released under the terms of the GNU Free Documentation License,
 
 12. _Note 5 - The requirements of this section do not prevent an implementation from enforcing stricter requirements on the evaluation of programs. - End Note_
 
-### §1.3.2 Constrained Operations [intro.constrained]
+#### §1.3.2 Constrained Operations [intro.constrained]
 
 1. This document defines a number of operations that are prohibited by this specification to enhance the freedom of implementations in implementing the provisions of this specification. No diagnostic is required for a violation of any clause of this section. 
 2. A program shall not contain a call to any operator function defined by this specification, unless the call was an implicit call via the overloaded operator or the operator is one of the following
@@ -111,10 +111,20 @@ This document is released under the terms of the GNU Free Documentation License,
     - All specialized template parameters shall be valid for the primary template. 
     - The provided specialization meets the requirements of the type, or, if defined, the requirements on specializations instead. 
 17. A program that provides partial or full specializations for types defined by the C++ Standard in Use must have at least one type template parameter that is a *user-provided type*. 
-18. _Note 7 - This implies its not valid to specialize a Standard Library type on a type defined by this specification - End Note_
+18. _Note 7 - This implies its not valid to specialize a Standard Library template on a type defined by this specification - End Note_
 
 
-## §2 Configuration Macros and [config]
+### §1.4 Concurrency Operations in this library [intro.concurrency]
+
+1. Unless otherwise indicated, functions declared in this library act as though by only accessing objects which are accessible from it's arguments, including the implicit parameter, as well as any `const` complete objects that have no `mutable` subobjects. 
+
+2. Functions declared in this library act as though by only writing to objects accessible from it's non-const reference and pointer arguments, including the implicit parameter. 
+
+3. Functions declared in this library may assume any object accessible through an rvalue reference argument is not accessible through any other pointer or reference parameter, including the implicit parameter. 
+
+4. _Note 1 - If an implementation so chooses to make that assumption, the result of violating that assumption is undefined behaviour - End Note_
+
+## §2 Configuration Macros and Version Info [config]
 
 1. Header `<lclib-c++/Config.hpp>` Synopsis
 ```c++
@@ -193,6 +203,8 @@ This document is released under the terms of the GNU Free Documentation License,
     * Otherwise (expr is `false`), if the macro LCLIB_CXX_DEBUG is defined by the program or the implementation. Evaluating the macro throws an exception that matches a handler of type `std::logic_error`, with an unspecified `what()` message which includes the provided message (which must be a string literal), as well as the file name and line that expands the macro. It is unspecified whether the implementation defines the macro `LCLIB_CXX_DEBUG`, except that the implementation shall not define that macro if `NDEBUG` is defined.
     * Otherwise (expr is `false` and `LCLIB_CXX_DEBUG` is not defined), the behaviour is undefined. 
     * If the evaluation of `expr`, including the contextual conversion to `bool`, has any *observable behaviour*, the behaviour is undefined.
+    * If a program includes any headers from this specification, it shall not define `LCLIB_CXX_DEBUG` after including any header, contain an intervening `#undef` of `LCLIB_CXX_DEBUG` between two headers. No diagnostic is required
+    * If a program includes any headers from this specification or the C++ Standard Library, it shall not define `NDEBUG` after including any header, contain an intervening `#undef` of `NDEBUG` between two headers. No diagnostic is required.
 
 ### §2.4 Library Version
 
@@ -374,7 +386,7 @@ struct Version{
     - `v1>=v2` iff `(v2<=>v2)>=0`
     - `v1>=v2` and `v2>=v1` iff `v1==v2`
 
-### §3.3 Binary Stream Operators [version.op]
+### §3.3 Binary Stream Operators [version.stream]
 
 `lclib::io::DataOutputStream& operator<<(lclib::io::DataOutputStream& out,const Version& v);`
 
@@ -461,7 +473,7 @@ namespace lclib::array{
 }
 ```
 
-### §3.1 class DynamicArray [array.array]
+### §4.1 class DynamicArray [array.array]
 
 1. Class template `DynamicArray` Synopsis
 ```c++
@@ -535,7 +547,7 @@ template<typename T,typename Alloc=std::allocator<T>> DynamicArray{
 
 10. `T` shall not be an incomplete type, other than an array of an unknown bound. No diagnostic is required
 
-#### §3.1.1 Dynamic Array Member Types [array.types]
+#### §4.1.1 Dynamic Array Member Types [array.types]
 
 `using value_type = T;`
 
@@ -581,12 +593,12 @@ template<typename T,typename Alloc=std::allocator<T>> DynamicArray{
 `using size_type = std::make_unsigned_t<difference_type>;`
 
 11. The unsigned version of `difference_type`, and the size type of this collection.
-
+e pointer type docs from
 `using allocator_type = Alloc;`
 
 12. The allocator type of this collection, exactly `Alloc`.
 
-#### §3.1.2 DynamicArray Constructors [array.ctor]
+#### §4.1.2 DynamicArray Constructors [array.ctor]
 
 `DynamicArray(const Alloc& alloc=Alloc())`
 1. Constructs an empty array. It is unspecified whether any allocation occurs
@@ -615,7 +627,7 @@ template<typename T,typename Alloc=std::allocator<T>> DynamicArray{
 
 7. Copy constructs from arr using `alloc` to allocate the underlying array.
 
-8. Mandates:
+8. Requires:
     - `std::is_constructible_v<T,const U&>` shall be true. 
 
 9. Preconditions:
@@ -640,9 +652,444 @@ template<typename T,typename Alloc=std::allocator<T>> DynamicArray{
 
 14. Move constructs a DynamicArray from` arr` using `alloc`. `arr` is left in a valid, but unspecified, state. 
 
-15. Mandates:
+15. Requires:
     - `T` shall be constructible from `U&&`. 
 
 16. Preconditions:
     - The behaviour is undefined if `arr` is *partially-constructed*
+
+17. Postconditions:
+    - `this->get_allocator()==alloc`
+
+`explicit DynamicArray(size_type len,const Alloc& alloc=Alloc())`
+
+17. Default constructs an array of `len` elements of type `T`. If `Alloc` is `std::allocator`, it is unspecified whether each element is *value-initialized* or *default-initialized*. 
+
+18. Postconditions:
+    - `this->get_allocator()==alloc`.
+
+19. Exceptions:
+    - If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
+    - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed. 
+
+`template<std::size_t N> DynamicArray(const T(&arr)[N],const Alloc& alloc=Alloc())`
+`template<std::size_t N> DynamicArray(const std::array<T,N>& arr,const Alloc& alloc=Alloc())`
+
+20. Constructs a Dynamic Array from a statically-sized array. 
+
+21. Postconditions:
+    - `this->get_allocator()==alloc`
+    - `this->size()==N`
+    - `std::equal(begin(*this),end(*this),begin(arr),end(arr))`, where `begin` and `end` are both looked up in the associated namespaces, as well as the namespace std, if `T` is *EqualityComparable*, and copy-construction of `T` is *equality-preserving*
+
+22. Exceptions:
+    - If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
+    - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed. 
+
+
+`DynamicArray(std::initializer_list<T> il,const Alloc& alloc=Alloc());`
+
+23. Constructs a new DynamicArray from the elements of `il` (this allows list-initialization)
+
+24. Postconditions:
+    - `this->get_allocator()==alloc`
+    - `this->size()==il.size()`
+    - `std::equal(begin(*this),end(*this),begin(il),end(il))`, where `begin` and `end` are both looked up in the associated namespaces, as well as the namespace std, if `T` is *EqualityComparable*, and copy-construction of `T` is *equality-preserving*
+
+25. Exceptions:
+    - If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
+    - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed. 
+
+`template<typename Container> explicit DynamicArray(const Container& c,const Alloc& alloc=Alloc())`
+
+26. Constructs a new array from the elements of the container `c`.
+
+27. Requires:
+    - `Container` shall satisfy *Container*, and have *Cpp17ForwardIterator*s. The expression `size(c)` shall be well-formed, where `size` is looked up in the associated namespaces and in the namespace `std`. 
+    - `T` shall be constructible from the result of the expression `*begin(c)`, where `begin` is looked up in the associated namespaces, and in the namespace `std`.
+    - `Container` shall not be an array type, `std::array<T,N>`, `std::initializer_list<T>`, or a specialization of `DynmaicArray`. 
+
+28. Preconditions:
+    - `begin(c)` shall be incrementable for `size(c)` elements, and the range `[begin(c),std::advance(begin(c),size(c)))` shall be dereferenceable. 
+    - The iterator type of `Container` shall model `*Cpp17ForwardIterator*. 
+
+29. Postconditions:
+    - `this->get_allocator()==alloc`
+    - `this->size()==size(c)` where `size` is looked up in the associated namespaces, as well as the namespace std. 
+    - `std::equal(begin(*this),end(*this),begin(c),end(c))`, where `begin` and `end` are both looked up in the associated namespaces, as well as the namespace std, if `T` is *EqualityComparable*, and copy-construction of `T` is *equality-preserving*
+
+30. Exceptions:
+    - If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
+    - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed.  
+
+`template<typename ForwardIter> DynamicArray(ForwardIter begin,ForwardIter end,const Alloc& alloc=Alloc())`
+
+31. Constructs a new `DynamicArray` with the elements in the range `[begin,end)`. 
+
+32. Requires:
+    - `ForwardIter` shall satisfy the requirements of *Cpp17ForwardIterator*.
+    - `T` shall be constructible from `ForwardIter::reference`. 
+
+33. Preconditions:
+    - The range `[begin,end)` shall be valid. 
+
+34. Postconditions:
+    - `this->get_allocator()==alloc`
+    - `this->size()==std::distance(begin,end)`
+    - `std::equal(begin(*this),end(*this),begin,end)`, where `begin` and `end` are both looked up in the associated namespaces, as well as the namespace std, if `T` is *EqualityComparable*, and copy-construction of `T` is *equality-preserving*
+
+35. Exceptions:
+    - If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
+    - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed. 
+
+`template<typename ForwardIter> DynamicArray(ForwardIter begin,size_type length,const Alloc& alloc=Alloc())`
+
+36. Constructs a new `DynamicArray` from the elements of the range `[begin,begin+length)`.
+
+37. Requires:
+    - `ForwardIter` shall satisfy the requirements of *Cpp17ForwardIterator*.
+    - `T` shall be constructible from `ForwardIter::reference`. 
+
+38. Preconditions:
+    - The range `[begin,end)` shall be valid. 
+
+39. Postconditions:
+    - `this->get_allocator()==alloc`
+    - `this->size()==std::distance(begin,end)`
+    - `std::equal(begin(*this),end(*this),begin,end)`, where `begin` and `end` are both looked up in the associated namespaces, as well as the namespace std, if `T` is *EqualityComparable*, and copy-construction of `T` is *equality-preserving*
+
+40. Exceptions:
+    - If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
+    - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed. 
+
+#### §4.1.3 Destructor [array.dtor]
+
+`~DynamicArray()noexcept;`
+
+1. Destroys the elements of the array, and then deallocates the backing array. If the array is *partially-constructed* only the elements which were fully constructed are destroyed.
+
+2. Exceptions:
+    - If the destructor of any element throws an exception, `std::terminate` is called. It is unspecified if stack unwinding occurs. 
+
+#### §4.1.4 Assignment [array.assign]
+
+`DynamicArray& operator=(const DynamicArray& arr)`
+
+1. Copy-assigns `*this` from `arr`. Each element in `*this` is copy-constructed or copy-assigned (which occurs is unspecified). 
+
+2. Preconditions:
+    - The behaviour is undefined if `arr` is *partially-constructed*.
+
+3. Postconditions:
+    - Let `ALLOC` be `this->get_allocator()` before this call if `std::allocator_traits<Alloc>::propagate_on_container_copy_assignment::value` is `false`, or `arr.get_allocator()` otherwise. After copy-assignment from `arr`, `this->get_allocator()==ALLOC`.
+    -  After copy-assignment from `arr`,`(*this)==arr`is true if `T` satsifies *EqualityComparable* and copy-construction of `T` is equality-preserving, and that copy-assigning any element is equivalent, as observed by equality comparison, to invoking the destructor, followed by constructing a new element into the same storage.
+    - After copy-assignment from `arr`, `this->size()==arr.size()`. 
+
+4. Exceptions:
+    - If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
+    - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed. 
+    - If an exception occurs while assigning any element, other assignment elements remain assigned, and subsequent elements remain in there original state.
+
+`DynamicArray& operator=(DynamicArray&& rhs) noexcept(/*see below*/)`
+
+5. Move assigns `*this` from `rhs`. `rhs` is left in a valid, but unspecified, state. 
+
+6. Preconditions:
+    - If `std::allocator_traits<Alloc>::propagate_on_container_move_assignment::value` is false, the behaviour is undefined if rhs is *partially-constructed*.
+
+7. Postconditions:
+    - Let `RHS_ALLOC` be `rhs.get_allocator()` before the move assignment, and let `ALLOC` be `this->get_allocator()` before the move assignment if `std::allocator_traits<Alloc>::propagate_on_container_move_assignment::value` is false, and `RHS_ALLOC` otherwise. `this->get_allocator()==ALLOC` is true.
+
+8. Exceptions:
+    - `noexcept(true)` if `std::allocator_traits<Alloc>::propagate_on_container_move_assignment::value` is true. 
+    - Otherwise, If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
+    - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed. 
+    - If an exception occurs while assigning any element, other assignment elements remain assigned, and subsequent elements remain in there original state.
+
+#### §4.1.5  DynamicArray swap [array.swap]
+
+`void swap(DynamicArray<T>& rhs) noexcept(/*see below*/);`
+
+1. Swaps this with rhs. Does not perform any allocation.
+
+2. Preconditions:
+    - If `std::allocator_traits<Alloc>::propagate_on_container_swap` is false, the behaviour is undefined if `this->get_allocator()==rhs.get_allocator()` is false.
+3. Exceptions:
+    - If `std::allocator_traits<Alloc>::propagate_on_container_swap` is false, then the function is `noexcept(true)`.
+    - Otherwise, if the expression `swap(ALLOC,rhs.ALLOC)`, where `ALLOC` is an *exposition-only* field of type `Alloc`, accessible to the body of this function and `swap` is looked up in the associated namespaces and in the namespace `std`, is not *potentially-throwing* the function is `noexcept(true)`.
+    - Otherwise, if that expression throws an exception, both `*this` and `rhs` are left in their original states. If an exception is thrown, but the expression modifies either `ALLOC` or `rhs.ALLOC`, the behaviour is undefined. 
+
+`template<typename T,typename Alloc> void swap(DynamicArray<T,Alloc>& a1,DynamicArray<T,Alloc>& a2) noexcept(/*see below*/);`
+
+4. Non-member specialization of the `swap` customization point. The expression `swap(a1,a2)`, where `a1` and `a2` are lvalues of type `DynamicArray<T,Alloc>`, is equivalent to `a1.swap(a2)`. 
+
+5. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+
+6. Exceptions:
+    - Same as `a1.swap(a2)`.
+
+#### §4.1.6 DynamicArray iterators [array.iter]
+
+`iterator begin()noexcept`
+
+`const_iterator begin()const noexcept`
+1. Returns an iterator to the beginning of the collection. 
+
+2. Preconditions:
+    - The behaviour is undefined if `*this` is *partially-constructed*.
+
+3. Postconditions:
+    - `t.begin()==t.begin()`, where `t` is an expression of type `DynamicArray`.
+    - `t.begin()` is dereferenceable and incrementable if `t.size()!=0`, where `t` is an expression of type `DynamicArray`.
+    - `const_cast<const DynamicArray<T,Alloc>&>(t).begin()==t.begin()`, where `t` is an expression of type `DynamicArray`.
+
+`iterator end()noexcept`
+
+`const_iterator end()const noexcept`
+
+4. Returns an iterator past-the-end of the collection
+
+5. Preconditions:
+    - The behaviour is undefined if `*this` is *partially-constructed*.
+
+6. Postconditions:
+    - `t.end()==t.end()`, where `t` is an expression of type `DynamicArray`.
+    - `[t.begin(),t.end())` is a valid range, where `t` is an expression of type `DynamicArray`.
+    - `std::distance(t.begin(),t.end())==t.size()`, where `t` is an expression of type `DynamicArray`.
+    - `const_cast<const DynamicArray<T,Alloc>&>(t).end()==t.end()`, where `t` is an expression of type `DynamicArray`.
+
+`const_iterator cbegin()const noexcept`
+
+7. Equivalent to `this->begin()`, but selects the const overload even if called on a non-const lvalue.
+
+`const_iterator cend()const noexcept`
+
+8. Equivalent to `this->end()`, but selects the const overload even if called on a non-const lvalue.
+
+`reverse_iterator rbegin()noexcept`
+
+`const_reverse_iterator rbegin()const noexcept`
+
+9. Returns an iterator to end of the collection, that iterates in reverse.
+
+10. Preconditions:
+    - The behaviour is undefined if `*this` is *partially-constructed*. 
+
+11. Postconditions:
+    - `t.rbegin()==t.rbegin()`, where `t` is an expression of type `DynamicArray`.
+    - `t.rbegin()` is dereferenceable and incrementable if `t.size()!=0`, where `t` is an expression of type `DynamicArray`.
+    - `const_cast<const DynamicArray<T,Alloc>&>(t).rbegin()==t.rbegin()`, where `t` is an expression of type `DynamicArray`.
+
+`reverse_iterator rend()noexcept`
+
+`const_reverse_iterator rend()const noexcept`
+
+12. Returns an iterator past-the-beginning of this collection, that iterates in reverse.
+
+
+13. Preconditions:
+    - The behaviour is undefined if `*this` is *partially-constructed*.
+
+14. Postconditions:
+    - `t.rend()==t.rend()`, where `t` is an expression of type `DynamicArray`.
+    - `[t.rbegin(),t.rend())` is a valid range, where `t` is an expression of type `DynamicArray`.
+    - `std::distance(t.rbegin(),t.rend())==t.size()`, where `t` is an expression of type `DynamicArray`.
+    - `const_cast<const DynamicArray<T,Alloc>&>(t).rend()==t.rend()`, where `t` is an expression of type `DynamicArray`.
+
+`const_reverse_iterator crbegin()const noexcept`
+
+15. Same as `this->rbegin()`, but selects the const overload even if called on a non-const lvalue.
+
+`const_reverse_iterator crend()const noexcept`
+
+15. Same as `this->rend()`, but selects the const overload even if called on a non-const lvalue.
+
+`template<typename T,typename Alloc> DynamicArray<T,Alloc>::iterator begin(DynamicArray<T,Alloc>& arr)noexcept`
+
+`template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_iterator begin(const DynamicArray<T,Alloc>& arr)noexcept`
+
+16. Non-member specialization of the `begin` customization point. The expression `begin(arr)` is an equivalent expression to `arr.begin()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+
+17. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+
+18. Requires:
+    - `T` shall not be an array of an unknown bound.
+
+`template<typename T,typename Alloc> DynamicArray<T,Alloc>::iterator end(DynamicArray<T,Alloc>& arr)noexcept`
+
+`template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_iterator end(const DynamicArray<T,Alloc>& arr)noexcept`
+
+19. A specialization of the `end` customization point. The expression `end(arr)` is an equivalent expression to `arr.end()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+
+20. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+
+21. Requires:
+    - `T` shall not be an array of an unknown bound.
+
+`template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_iterator cbegin(DynamicArray<T,Alloc>& arr)noexcept`
+
+22. A specialization of the `cbegin` customization point. The expression `cbegin(arr)` is an equivalent expression to `arr.cbegin()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+
+23. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+
+24. Requires:
+    - `T` shall not be an array of an unknown bound.
+
+`template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_iterator cend(DynamicArray<T,Alloc>& arr)noexcept`
+
+25. A specialization of the `cend` customization point. The expression `cend(arr)` is an equivalent expression to `arr.cend()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+
+26. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+
+27. Requires:
+    - `T` shall not be an array of an unknown bound.
+
+`template<typename T,typename Alloc> DynamicArray<T,Alloc>::reverse_iterator rbegin(DynamicArray<T,Alloc>& arr)noexcept`
+
+`template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_reverse_iterator rbegin(const DynamicArray<T,Alloc>& arr)noexcept`
+
+25. A specialization of the `rbegin` customization point. The expression `rbegin(arr)` is an equivalent expression to `arr.rbegin()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+
+26. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+
+27. Requires:
+    - `T` shall not be an array of an unknown bound.
+
+`template<typename T,typename Alloc> DynamicArray<T,Alloc>::reverse_iterator rend(DynamicArray<T,Alloc>& arr)noexcept`
+
+`template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_reverse_iterator rend(const DynamicArray<T,Alloc>& arr)noexcept`
+
+28. A specialization of the `rend` customization point. The expression `rn(arr)` is an equivalent expression to `arr.rbegin()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+
+29. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+
+30. Requires:
+    - `T` shall not be an array of an unknown bound.
+
+`template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_iterator crbegin(DynamicArray<T,Alloc>& arr)noexcept`
+
+31. A specialization of the `rcbegin` customization point. The expression `crbegin(arr)` is an equivalent expression to `arr.crbegin()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+
+32. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+
+33. Requires:
+    - `T` shall not be an array of an unknown bound.
+
+`template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_iterator crend(DynamicArray<T,Alloc>& arr)noexcept`
+
+34. A specialization of the `crend` customization point. The expression `crend(arr)` is an equivalent expression to `arr.crend()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+
+35. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+
+36. Requires:
+    - `T` shall not be an array of an unknown bound.
+
+#### §4.1.7 DynamicArray data [array.data]
+
+`pointer data()noexcept`
+
+`const_pointer data()const noexcept`
+
+1.  Returns a pointer to the first element of the array
+
+2. Postconditions:
+    - `&*(this->data()+i)==&*(this->begin()+i)` for `0<=i<this->size()`, if `*this` is not *partially-constructed*.
+
+3. The behaviour is undefined if a pointer returned by the const overload is used to mutate any element of the array, except any `mutable` subobjects of `T`.  
+
+`template<typename T,typename Alloc> DynamicArray<T,Alloc>::pointer data(DynamicArray<T,Alloc>& arr) noexcept`
+
+`template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_pointer data(const DynamicArray<T,Alloc>& arr) noexcept`
+
+4. Non-member Specialization of the `data` customization point. The expression `data(arr)` is an equivalent expression to `arr.data()` if `arr` is an expression of type `DynamicArray<T,Alloc>`.
+
+5. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+
+#### §4.1.8 DynamicArray size [array.size]
+
+`size_type size()const noexcept`
+
+1. Returns the size of the array. 
+
+`template<typename T,typename Alloc> DynamicArray<T,Alloc> size(const DynamicArray<T,Alloc>& arr);`
+
+2. Non-member specialization of the `size` customization point. 
+
+3. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+
+#### §4.1.9 DynamicArray Indexing [array.index]
+
+`reference operator[](difference_type i)noexcept`
+
+`const_reference operator[](different_type i)noexcept`
+
+1. Indexes the array.
+
+2. Preconditions:
+    - `0<=i<this->size()`
+    - If `*this` is *partially-constructed*, then `i` shall be less than the index of first element that was not fully constructed
+    - _Note 1 - this is the element which construction threw an exception - End Note_
+
+3. Postconditions:
+    - `&arr[i]==arr.data()+i`, if `arr` is an expression of type `DynamicArray<T,Alloc>`
+
+4. The behaviour is undefined if a reference returned by the const overload is used to modify any element of the array, except any `mutable` subobjects of `T`. 
+
+#### §4.1.8 DynamicArray allocator [array.alloc]
+
+`const Alloc& get_allocator()const noexcept;`
+
+1. Returns a reference to the allocator type for this collection.
+
+### §4.2 DynamicArray Comparison Operators [array.compare]
+
+`template<typename T,typename Alloc1,typename Alloc2> /*see below*/ operator<=>(const DynamicArray<T,Alloc1>& a1,const DynamicArray<T,Alloc2>& a2) noexcept(/*see below*/);`
+
+1. Performs a lexicographical three-way comparison of the elements of `a1` and `a2`. 
+
+2. Requires:
+    - The expression `t1<=>t2` shall be well-formed, where `t1`, `t2` are expressions of type `T`. 
+    - `T` shall not be an array of an unknown bound. 
+
+3. Mandates:
+    - The expression `t1<=>t2` shall have type `std::strong_ordering`, `std::weak_ordering`, or `std::partial_ordering`. 
+
+4. Preconditions:
+    - Given `t1`, `t2` are expressions of type `T`,
+        - `(t1<=>t2)==0` shall be equivalent to `t1==t2`.
+        - `(t1<=>t2)!=0` shall be equivalent to `t1!=t2`.
+        - `(t1<=>t2)<0` shall be equivalent to `t1<t2`
+        - `(t1<=>t2)>0` shall be equivalent to `t1>t2`
+        - `(t1<=>t2)<=0` shall be equivalent to `t1<=t2`
+        - `(t1<=>t2)>=0` shall be equivalent to `t1>=t2`
+    - _Note 1 - That is, the three-way comparison operator selected for the comparison must be consistent with the other relational operators - End Note_
+    - During overload resolution against user-defined operator functions, the above operations only considers operator functions found in the associated namespaces of `T`, and any builtin operator candiates.
+
+5. Postconditions:
+    - If the expression `arr1<=>arr2` selects this overload, then all of the following pairs of expressions shall be equivalent, where each comparsion operation that has `arr1` and `arr2` as direct operands selects an operator function defined by this section. 
+        - `(arr1<=>arr2) == 0` and `arr1==arr2`
+        - `(arr1<=>arr2) != 0` and `arr1!=arr2`
+        - `(arr1<=>arr2) < 0` and `arr1<arr2`
+        - `(arr1<=>arr2) > 0` and `arr1>arr2`
+        - `(arr1<=>arr2) <= 0` and `arr1<=arr2`
+        - `(arr1<=>arr2) >= 0` and `arr1>=arr2`
+
+6. Returns:
+    - `std::compare_three_way_result<T>::type`, if that type is `std::partial_ordering` or `std::weak_ordering`, or
+    - Either `std::strong_ordering` or `std::weak_ordering` (which type is used is *implementation-defined*) otherwise (that is, if `std::compare_three_way_result<T>::type` is `std::strong_ordering`)
+
+7. Exceptions:
+    - `noexcept(true)` if the expression `t1<=>t2` used above is not *potentially-throwing*
+    - Otherwise, throws any exceptions thrown by the comparison between two elements of the array. 
+
+
+`template<typename T,typename Alloc1,typename Alloc2> bool operator==(const DynamicArray<T,Alloc1>& arr1,const DynamicArray<T,Alloc2>& arr2) noexcept(/*see below*/)`
+
+1. Compares the elements of `arr1` and `arr2` for equality. An equivalent expression to `std::equal(begin(arr1),end(arr1),begin(arr2),end(arr2))`
+
+2. Requires:
+    - Given `t1`, `t2` are expressions of type `T`, `t1==t2` shall be well-formed in a context that only considers the associated namespaces of `T`. 
+    - `T` shall not be an array of an unknown bound
+
+
 

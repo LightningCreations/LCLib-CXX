@@ -166,7 +166,7 @@ If `T` is a reference type, function type, or (possibly cv-qualified) void, the 
     DynamicArray(std::initializer_list<T> list,const Alloc& alloc=Alloc()); (8)
     DynamicArray(size_type size,const Alloc& alloc=Alloc()); (9)
     template<typename Container> DynamicArray(Container&& c,const Alloc& alloc=Alloc()); (10)
-    template<typename ForwardIter> DynamicArray(ForwardIter begin,FowardIter end,,const Alloc& alloc=Alloc()); (11)
+    template<typename ForwardIter> DynamicArray(ForwardIter begin,FowardIter end,const Alloc& alloc=Alloc()); (11)
     ~DynamicArray(); (12)
 
     DynamicArray& operator=(const DynamicArray&); (13)

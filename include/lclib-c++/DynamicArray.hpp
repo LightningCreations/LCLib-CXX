@@ -346,38 +346,45 @@ namespace lclib::array{
         }
     };
 
-    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()==std::declval<const T&>())>* =nullptr>
+    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()==std::declval<const T&>())>* =nullptr,
+            std::enable_if_t<!std::is_same_v<std::remove_extent_t<T>[],T>>* =nullptr>
         bool operator==(const DynamicArray<T,Alloc1>& a1,const DynamicArray<T,Alloc2>& a2) noexcept(noexcept(a1[0]==a2[0])){
             return std::equal(begin(a1),end(a1),begin(a2),end(a2));
         }
 
 #ifdef LCLIB_CXX_HAS_20_SPACESHIP
-    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()<=>std::declval<const T&>())>* =nullptr>
+    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()<=>std::declval<const T&>())>* =nullptr,
+            std::enable_if_t<!std::is_same_v<std::remove_extent_t<T>[],T>>* =nullptr>
         auto operator<=>(const DynamicArray<T,Alloc1>& a1,const DynamicArray<T,Alloc2>& a2){
             return std::lexicographical_compare_three_way(begin(a1),end(a1),begin(a2),end(a2));
         }
 #else
-    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()==std::declval<const T&>())>* =nullptr>
+    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()==std::declval<const T&>())>* =nullptr,
+            std::enable_if_t<!std::is_same_v<std::remove_extent_t<T>[],T>>* =nullptr>
         bool operator!=(const DynamicArray<T,Alloc1>& a1,const DynamicArray<T,Alloc2>& a2) noexcept(noexcept(a1==a2)){
             return !(a1==a2);
         }
 #endif
 
-    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>())>* =nullptr>
+    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>())>* =nullptr,
+            std::enable_if_t<!std::is_same_v<std::remove_extent_t<T>[],T>>* =nullptr>
         bool operator<(const DynamicArray<T,Alloc1>& a1,const DynamicArray<T,Alloc2>& a2) noexcept(noexcept(a1[0]<a2[0])){
             return std::lexicographical_compare(begin(a1),end(a1),begin(a2),end(a2));
         }
 
-    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>())>* =nullptr>
+    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>())>* =nullptr,
+            std::enable_if_t<!std::is_same_v<std::remove_extent_t<T>[],T>>* =nullptr>
         bool operator>(const DynamicArray<T,Alloc1>& a1,const DynamicArray<T,Alloc2>& a2) noexcept(noexcept(a1[0]<a2[0])){
             return a2<a1;
         }
 
-    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>()||std::declval<const T&>()==std::declval<const T&>())>* =nullptr>
+    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>()||std::declval<const T&>()==std::declval<const T&>())>* =nullptr,
+            std::enable_if_t<!std::is_same_v<std::remove_extent_t<T>[],T>>* =nullptr>
         bool operator<=(const DynamicArray<T,Alloc1>& a1,const DynamicArray<T,Alloc2>& a2) noexcept(noexcept(a1[0]<a2[0]||a1[0]==a2[0])){
             return a1<a2||a1==a2;
         }
-    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>()||std::declval<const T&>()==std::declval<const T&>())>* =nullptr>
+    template<typename T,typename Alloc1,typename Alloc2,std::void_t<decltype(std::declval<const T&>()<std::declval<const T&>()||std::declval<const T&>()==std::declval<const T&>())>* =nullptr,
+            std::enable_if_t<!std::is_same_v<std::remove_extent_t<T>[],T>>* =nullptr>
         bool operator>=(const DynamicArray<T,Alloc1>& a1,const DynamicArray<T,Alloc2>& a2) noexcept(noexcept(a1[0]<a2[0]||a1[0]==a2[0])){
             return a1>a2||a1==a2;
         }
@@ -588,6 +595,8 @@ namespace lclib::array{
         friend void swap(DynamicArray& a1,DynamicArray& a2) noexcept(!std::allocator_traits<Alloc>::propagate_on_container_swap::value||std::is_nothrow_swappable_v<Alloc>){
             a1.swap(a2);
         }
+
+        
         
     };
 
