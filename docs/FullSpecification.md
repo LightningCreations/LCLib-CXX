@@ -663,102 +663,102 @@ e pointer type docs from
 
 `explicit DynamicArray(size_type len,const Alloc& alloc=Alloc())`
 
-17. Default constructs an array of `len` elements of type `T`. If `Alloc` is `std::allocator`, it is unspecified whether each element is *value-initialized* or *default-initialized*. 
+18. Default constructs an array of `len` elements of type `T`. If `Alloc` is `std::allocator`, it is unspecified whether each element is *value-initialized* or *default-initialized*. 
 
-18. Postconditions:
+19. Postconditions:
     - `this->get_allocator()==alloc`.
 
-19. Exceptions:
+20. Exceptions:
     - If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
     - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed. 
 
 `template<std::size_t N> DynamicArray(const T(&arr)[N],const Alloc& alloc=Alloc())`
 `template<std::size_t N> DynamicArray(const std::array<T,N>& arr,const Alloc& alloc=Alloc())`
 
-20. Constructs a Dynamic Array from a statically-sized array. 
+21. Constructs a Dynamic Array from a statically-sized array. 
 
-21. Postconditions:
+22. Postconditions:
     - `this->get_allocator()==alloc`
     - `this->size()==N`
     - `std::equal(begin(*this),end(*this),begin(arr),end(arr))`, where `begin` and `end` are both looked up in the associated namespaces, as well as the namespace std, if `T` is *EqualityComparable*, and copy-construction of `T` is *equality-preserving*
 
-22. Exceptions:
+23. Exceptions:
     - If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
     - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed. 
 
 
 `DynamicArray(std::initializer_list<T> il,const Alloc& alloc=Alloc());`
 
-23. Constructs a new DynamicArray from the elements of `il` (this allows list-initialization)
+24. Constructs a new DynamicArray from the elements of `il` (this allows list-initialization)
 
-24. Postconditions:
+25. Postconditions:
     - `this->get_allocator()==alloc`
     - `this->size()==il.size()`
     - `std::equal(begin(*this),end(*this),begin(il),end(il))`, where `begin` and `end` are both looked up in the associated namespaces, as well as the namespace std, if `T` is *EqualityComparable*, and copy-construction of `T` is *equality-preserving*
 
-25. Exceptions:
+26. Exceptions:
     - If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
     - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed. 
 
 `template<typename Container> explicit DynamicArray(const Container& c,const Alloc& alloc=Alloc())`
 
-26. Constructs a new array from the elements of the container `c`.
+27. Constructs a new array from the elements of the container `c`.
 
-27. Requires:
+28. Requires:
     - `Container` shall satisfy *Container*, and have *Cpp17ForwardIterator*s. The expression `size(c)` shall be well-formed, where `size` is looked up in the associated namespaces and in the namespace `std`. 
     - `T` shall be constructible from the result of the expression `*begin(c)`, where `begin` is looked up in the associated namespaces, and in the namespace `std`.
     - `Container` shall not be an array type, `std::array<T,N>`, `std::initializer_list<T>`, or a specialization of `DynmaicArray`. 
 
-28. Preconditions:
+29. Preconditions:
     - `begin(c)` shall be incrementable for `size(c)` elements, and the range `[begin(c),std::advance(begin(c),size(c)))` shall be dereferenceable. 
     - The iterator type of `Container` shall model `*Cpp17ForwardIterator*. 
 
-29. Postconditions:
+30. Postconditions:
     - `this->get_allocator()==alloc`
     - `this->size()==size(c)` where `size` is looked up in the associated namespaces, as well as the namespace std. 
     - `std::equal(begin(*this),end(*this),begin(c),end(c))`, where `begin` and `end` are both looked up in the associated namespaces, as well as the namespace std, if `T` is *EqualityComparable*, and copy-construction of `T` is *equality-preserving*
 
-30. Exceptions:
+31. Exceptions:
     - If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
     - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed.  
 
 `template<typename ForwardIter> DynamicArray(ForwardIter begin,ForwardIter end,const Alloc& alloc=Alloc())`
 
-31. Constructs a new `DynamicArray` with the elements in the range `[begin,end)`. 
+32. Constructs a new `DynamicArray` with the elements in the range `[begin,end)`. 
 
-32. Requires:
+33. Requires:
     - `ForwardIter` shall satisfy the requirements of *Cpp17ForwardIterator*.
     - `T` shall be constructible from `ForwardIter::reference`. 
 
-33. Preconditions:
+34. Preconditions:
     - The range `[begin,end)` shall be valid. 
 
-34. Postconditions:
+35. Postconditions:
     - `this->get_allocator()==alloc`
     - `this->size()==std::distance(begin,end)`
     - `std::equal(begin(*this),end(*this),begin,end)`, where `begin` and `end` are both looked up in the associated namespaces, as well as the namespace std, if `T` is *EqualityComparable*, and copy-construction of `T` is *equality-preserving*
 
-35. Exceptions:
+36. Exceptions:
     - If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
     - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed. 
 
 `template<typename ForwardIter> DynamicArray(ForwardIter begin,size_type length,const Alloc& alloc=Alloc())`
 
-36. Constructs a new `DynamicArray` from the elements of the range `[begin,begin+length)`.
+37. Constructs a new `DynamicArray` from the elements of the range `[begin,begin+length)`.
 
-37. Requires:
+38. Requires:
     - `ForwardIter` shall satisfy the requirements of *Cpp17ForwardIterator*.
     - `T` shall be constructible from `ForwardIter::reference`. 
 
-38. Preconditions:
+39. Preconditions:
     - The range `[begin,end)` shall be valid. 
 
-39. Postconditions:
+40. Postconditions:
     - `this->get_allocator()==alloc`
     - `this->size()==std::distance(begin,end)`
     - `std::equal(begin(*this),end(*this),begin,end)`, where `begin` and `end` are both looked up in the associated namespaces, as well as the namespace std, if `T` is *EqualityComparable*, and copy-construction of `T` is *equality-preserving*
 
-40. Exceptions:
+41. Exceptions:
     - If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
     - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed. 
 
@@ -902,86 +902,86 @@ e pointer type docs from
 
 `const_reverse_iterator crend()const noexcept`
 
-15. Same as `this->rend()`, but selects the const overload even if called on a non-const lvalue.
+16. Same as `this->rend()`, but selects the const overload even if called on a non-const lvalue.
 
 `template<typename T,typename Alloc> DynamicArray<T,Alloc>::iterator begin(DynamicArray<T,Alloc>& arr)noexcept`
 
 `template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_iterator begin(const DynamicArray<T,Alloc>& arr)noexcept`
 
-16. Non-member specialization of the `begin` customization point. The expression `begin(arr)` is an equivalent expression to `arr.begin()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+17. Non-member specialization of the `begin` customization point. The expression `begin(arr)` is an equivalent expression to `arr.begin()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
 
-17. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+18. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
 
-18. Requires:
+19. Requires:
     - `T` shall not be an array of an unknown bound.
 
 `template<typename T,typename Alloc> DynamicArray<T,Alloc>::iterator end(DynamicArray<T,Alloc>& arr)noexcept`
 
 `template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_iterator end(const DynamicArray<T,Alloc>& arr)noexcept`
 
-19. A specialization of the `end` customization point. The expression `end(arr)` is an equivalent expression to `arr.end()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+20. A specialization of the `end` customization point. The expression `end(arr)` is an equivalent expression to `arr.end()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
 
-20. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+21. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
 
-21. Requires:
+22. Requires:
     - `T` shall not be an array of an unknown bound.
 
 `template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_iterator cbegin(DynamicArray<T,Alloc>& arr)noexcept`
 
-22. A specialization of the `cbegin` customization point. The expression `cbegin(arr)` is an equivalent expression to `arr.cbegin()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+23. A specialization of the `cbegin` customization point. The expression `cbegin(arr)` is an equivalent expression to `arr.cbegin()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
 
-23. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+24. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
 
-24. Requires:
+25. Requires:
     - `T` shall not be an array of an unknown bound.
 
 `template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_iterator cend(DynamicArray<T,Alloc>& arr)noexcept`
 
-25. A specialization of the `cend` customization point. The expression `cend(arr)` is an equivalent expression to `arr.cend()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+26. A specialization of the `cend` customization point. The expression `cend(arr)` is an equivalent expression to `arr.cend()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
 
-26. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+27. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
 
-27. Requires:
+28. Requires:
     - `T` shall not be an array of an unknown bound.
 
 `template<typename T,typename Alloc> DynamicArray<T,Alloc>::reverse_iterator rbegin(DynamicArray<T,Alloc>& arr)noexcept`
 
 `template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_reverse_iterator rbegin(const DynamicArray<T,Alloc>& arr)noexcept`
 
-25. A specialization of the `rbegin` customization point. The expression `rbegin(arr)` is an equivalent expression to `arr.rbegin()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+29. A specialization of the `rbegin` customization point. The expression `rbegin(arr)` is an equivalent expression to `arr.rbegin()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
 
-26. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+30. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
 
-27. Requires:
+31. Requires:
     - `T` shall not be an array of an unknown bound.
 
 `template<typename T,typename Alloc> DynamicArray<T,Alloc>::reverse_iterator rend(DynamicArray<T,Alloc>& arr)noexcept`
 
 `template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_reverse_iterator rend(const DynamicArray<T,Alloc>& arr)noexcept`
 
-28. A specialization of the `rend` customization point. The expression `rn(arr)` is an equivalent expression to `arr.rbegin()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+32. A specialization of the `rend` customization point. The expression `rn(arr)` is an equivalent expression to `arr.rbegin()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
 
-29. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+33. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
 
-30. Requires:
+34. Requires:
     - `T` shall not be an array of an unknown bound.
 
 `template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_iterator crbegin(DynamicArray<T,Alloc>& arr)noexcept`
 
-31. A specialization of the `rcbegin` customization point. The expression `crbegin(arr)` is an equivalent expression to `arr.crbegin()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+35. A specialization of the `rcbegin` customization point. The expression `crbegin(arr)` is an equivalent expression to `arr.crbegin()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
 
-32. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+36. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
 
-33. Requires:
+37. Requires:
     - `T` shall not be an array of an unknown bound.
 
 `template<typename T,typename Alloc> DynamicArray<T,Alloc>::const_iterator crend(DynamicArray<T,Alloc>& arr)noexcept`
 
-34. A specialization of the `crend` customization point. The expression `crend(arr)` is an equivalent expression to `arr.crend()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
+38. A specialization of the `crend` customization point. The expression `crend(arr)` is an equivalent expression to `arr.crend()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`. 
 
-35. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
+39. If overload resolution selects an instantiation of this function template, except for a call with an unqualified-id, where the parameter has the type `DynamicArray<T,Alloc>`, the program is ill-formed. No diagnostic is required
 
-36. Requires:
+40. Requires:
     - `T` shall not be an array of an unknown bound.
 
 #### §4.1.7 DynamicArray data [array.data]
@@ -1085,11 +1085,23 @@ e pointer type docs from
 
 `template<typename T,typename Alloc1,typename Alloc2> bool operator==(const DynamicArray<T,Alloc1>& arr1,const DynamicArray<T,Alloc2>& arr2) noexcept(/*see below*/)`
 
-1. Compares the elements of `arr1` and `arr2` for equality. An equivalent expression to `std::equal(begin(arr1),end(arr1),begin(arr2),end(arr2))`
+8. Compares the elements of `arr1` and `arr2` for equality. An equivalent expression to `std::equal(begin(arr1),end(arr1),begin(arr2),end(arr2))`
 
-2. Requires:
+9. Requires:
     - Given `t1`, `t2` are expressions of type `T`, `t1==t2` shall be well-formed in a context that only considers the associated namespaces of `T`. 
     - `T` shall not be an array of an unknown bound
 
+10. Preconditions:
+    - If `std::equal_to<T>` names a partial-specialization which is user-provided (that is, defined by neither the C++ Standard in use nor by this specification), the expression `std::equal_to<T>{}(t1,t2)` shall be equivalent to `t1==t2`. 
 
+11. Postconditions:
+    - If `T` models *EqualityComparable*, then `DynamicArray<T,Alloc>` models *EqualityComparable*. 
+
+`template<typename T,typename Alloc1,typename Alloc2> bool operator!=(const DynamicArray<T,Alloc1>& arr1,const DynamicArray<T,Alloc2>& arr2) noexcept(/*see below*/)`
+
+12. Compares two arrays for equality. The expression `arr1!=arr2` is equivalent to `!(arr1==arr2)`.
+
+13. Requires:
+    - Given `t1`, `t2` are expressions of type `T`, `t1==t2` shall be well-formed in a context that only considers the associated namespaces of `T`. 
+    - `T` shall not be an array of an unknown bound
 
