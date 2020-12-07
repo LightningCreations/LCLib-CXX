@@ -592,7 +592,7 @@ namespace lclib::array{
     };
 
     template<typename T,typename Alloc1,typename Alloc2,decltype(std::declval<const T&>()==std::declval<const T&>())* =nullptr>
-         bool operator==(const DynamicArray<T[],Alloc1>& a1,const DynamicArray<T[],Alloc2>& a2) noexcept(a1[0][0]==a2[0][0]){
+         bool operator==(const DynamicArray<T[],Alloc1>& a1,const DynamicArray<T[],Alloc2>& a2) noexcept(noexcept(a1[0][0]==a2[0][0])){
             if(a1.rows()!=a2.rows()||a1.columns()!=a2.columns())
                 return false;
             else
@@ -600,7 +600,7 @@ namespace lclib::array{
         }
 
     template<typename T,typename Alloc1,typename Alloc2,decltype(std::declval<const T&>()==std::declval<const T&>())* =nullptr>
-        bool operator!=(const DynamicArray<T[],Alloc1>& a1,const DynamicArray<T[],Alloc2>& a2){
+        bool operator!=(const DynamicArray<T[],Alloc1>& a1,const DynamicArray<T[],Alloc2>& a2) noexcept(noexcept(a1[0][0]==a2[0][0])){
             return !(a1==a2);
         }
 }
