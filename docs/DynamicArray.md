@@ -235,7 +235,7 @@ Pre:
     * `this->get_allocator()==alloc`
     * `this->size()==std::distance(begin,end)`
     * If `std::decay_t<std::iterator_traits<ForwardIterator>::reference>` is exactly `T`, then `std::equal(this->begin(),this->end(),begin,end)`, given `T` is *EqualityComparable*, and copy-construction from `T` is *equality-preserving*.
-12. Destroys each element of the collection and deallocates the backing array using `this->get_allocator()`.
+12. Destroys each element in the reverse order of construction of the collection and deallocates the backing array using `this->get_allocator()`. If this array is *partially-constructed*, then only fully-constructed elements are destroyed. 
 13. Destroys each element of the collection and deallocates the backing array using `this->get_allocator()`, then constructs a new array as though by the constructor call `DynamicArray(rhs,ALLOC)`, where ALLOC is as follows:
     * If `std::allocator_traits<Alloc>::propagate_on_container_copy_assignment` inherits from `std::true_type`, `ALLOC` is `rhs.get_allocator()`.
     * Otherwise, `ALLOC` is `this->get_allocator()`.

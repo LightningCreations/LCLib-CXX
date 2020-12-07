@@ -390,6 +390,219 @@ namespace lclib::array{
     template<typename T,typename Alloc> DynamicArray(std::initializer_list<T>,const Alloc&)->DynamicArray<T,Alloc>;
     template<typename T,typename Alloc1,typename Alloc2> DynamicArray(const DynamicArray<T,Alloc2>&,const Alloc1&) -> DynamicArray<T,Alloc1>;
     template<typename T,typename Alloc1,typename Alloc2> DynamicArray(DynamicArray<T,Alloc2>&&,const Alloc1&) -> DynamicArray<T,Alloc1>;
+
+    
+    template<typename T,typename Alloc> struct DynamicArray<T[],Alloc>{
+    public:
+        static_assert(std::is_same_v<T,typename std::allocator_traits<Alloc>::value_type>);
+        static_assert(std::is_object_v<T>);
+        using value_type = T;
+        using reference = T&;
+        using const_reference = const T&;
+        using allocator_type = Alloc;
+        using pointer = typename std::allocator_traits<Alloc>::pointer;
+        using const_pointer = typename std::allocator_traits<Alloc>::const_pointer;
+        using difference_type = typename std::pointer_traits<pointer>::difference_type;
+        using size_type = std::make_unsigned_t<difference_type>;
+    private:
+        pointer _m_arr;
+        size_type _m_rows;
+        size_type _m_cols;
+        size_type _m_constructed;
+        allocator_type _m_alloc;
+    public:
+        DynamicArray(const Alloc& alloc = Alloc()) : _m_arr{}, _m_rows{}, _m_cols{}, _m_constructed{}, _m_alloc{alloc}{}
+
+        DynamicArray(const DynamicArray& arr) : _m_arr{}, _m_rows{}, _m_cols{}, _m_constructed{}, _m_alloc{std::allocator_traits<Alloc>::select_on_container_copy_construction(arr._m_alloc)}{
+            this->_m_arr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,arr._m_rows*arr._m_cols);
+            this->_m_rows = arr._m_rows;
+            this->_m_cols = arr._m_cols;
+            for(;_m_constructed<_m_rows*_m_cols;_m_constructed++)
+                std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_arr+this->_m_constructed,const_cast<const T&>(*(arr._m_arr+arr._m_constructed)));
+        }
+
+        explicit DynamicArray(const DynamicArray<T,Alloc>& arr) : _m_arr{}, _m_rows{}, _m_constructed{}, _m_alloc{std::allocator_traits<Alloc>::select_on_container_copy_construction(arr._m_alloc)}{
+            this->_m_arr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,arr._m_rows*arr._m_cols);
+            this->_m_rows = 1;
+            this->_m_cols = arr._m_size;
+            for(;_m_constructed<_m_cols;_m_constructed++)
+                std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_arr+this->_m_constructed,const_cast<const T&>(*(arr._m_ptr+arr._m_constructed)));
+        }
+
+        DynamicArray(DynamicArray&& arr) : _m_arr{std::exchange(arr._m_arr,0)}, _m_rows{arr._m_rows}, _m_cols{arr._m_cols},_m_constructed{arr._m_constructed},_m_alloc{std::move(arr._m_alloc)}{}
+        explicit DynamicArray(DynamicArray<T,Alloc>&& arr) : _m_arr{std::exchange(arr._m_ptr,0)}, _m_rows{1}, _m_cols{arr._m_ptr},_m_constructed{arr._m_constructed},_m_alloc{std::move(arr._m_alloc)}{}
+
+        template<typename U,typename Alloc2,std::enable_if_t<std::is_constructible_v<T,const U&>>* =nullptr> explicit 
+            DynamicArray(const DynamicArray<U[],Alloc2>& arr,const Alloc& alloc) : _m_arr{}, _m_rows{}, _m_cols{}, _m_constructed{}, _m_alloc{alloc}{
+            this->_m_arr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,arr._m_rows*arr._m_cols);
+            this->_m_rows = arr._m_rows;
+            this->_m_cols = arr._m_cols;
+            for(;_m_constructed<_m_rows*_m_cols;_m_constructed++)
+                std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_arr+this->_m_constructed,const_cast<const U&>(*(arr._m_arr+arr._m_constructed)));
+        }
+
+         template<typename U,typename Alloc2,std::enable_if_t<std::is_constructible_v<T,const U&>>* =nullptr,
+            std::enable_if_t<!std::is_same_v<std::remove_extent_t<U>[],U>>* =nullptr> explicit DynamicArray(const DynamicArray<U,Alloc2>& arr) : _m_arr{}, _m_rows{}, _m_constructed{}, _m_alloc{std::allocator_traits<Alloc>::select_on_container_copy_construction(arr._m_alloc)}{
+            this->_m_arr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,arr._m_rows*arr._m_cols);
+            this->_m_rows = 1;
+            this->_m_cols = arr._m_size;
+            for(;_m_constructed<_m_cols;_m_constructed++)
+                std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_arr+this->_m_constructed,const_cast<const U&>(*(arr._m_ptr+arr._m_constructed)));
+        }
+
+        template<typename U,typename Alloc2,std::enable_if_t<std::is_constructible_v<T,U&&>>* =nullptr> explicit 
+            DynamicArray(DynamicArray<U[],Alloc2>&& arr,const Alloc& alloc) : _m_arr{}, _m_rows{}, _m_cols{}, _m_constructed{}, _m_alloc{alloc}{
+            this->_m_arr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,arr._m_rows*arr._m_cols);
+            this->_m_rows = arr._m_rows;
+            this->_m_cols = arr._m_cols;
+            for(;_m_constructed<_m_rows*_m_cols;_m_constructed++)
+                std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_arr+this->_m_constructed,std::move(*(arr._m_arr+arr._m_constructed)));
+        }
+
+         template<typename U,typename Alloc2,std::enable_if_t<std::is_constructible_v<T,U&&>>* =nullptr,
+            std::enable_if_t<!std::is_same_v<std::remove_extent_t<U>[],U>>* =nullptr> explicit DynamicArray(DynamicArray<U,Alloc2>&& arr) : _m_arr{}, _m_rows{}, _m_constructed{}, _m_alloc{std::allocator_traits<Alloc>::select_on_container_copy_construction(arr._m_alloc)}{
+            this->_m_arr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,arr._m_rows*arr._m_cols);
+            this->_m_rows = 1;
+            this->_m_cols = arr._m_size;
+            for(;_m_constructed<_m_cols;_m_constructed++)
+                std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_arr+this->_m_constructed,std::move(*(arr._m_ptr+arr._m_constructed)));
+        }
+
+
+        explicit DynamicArray(size_type rows,size_type cols,const Alloc& alloc=Alloc()) : _m_arr{}, _m_rows{}, _m_cols{}, _m_alloc{alloc}{
+            this->_m_arr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,rows*cols);
+            this->_m_rows = rows;
+            this->_m_cols = cols;
+            for(;_m_constructed<_m_rows*_m_cols;_m_constructed++)
+                std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_arr+this->_m_constructed);
+        }
+
+        template<std::size_t N,std::size_t M> DynamicArray(const T(&arr)[N][M],const Alloc& alloc=Alloc())
+             : _m_arr{}, _m_rows{}, _m_cols{}, _m_alloc{alloc}{
+                 this->_m_arr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,N*M);
+                 this->_m_rows = N;
+                 this->_m_cols = M;
+                 for(size_type x = 0;x<N;x++)
+                    for(size_type y = 0;y<M;y++,_m_constructed++)
+                        std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+x*M+y,arr[x][y]);
+             }
+
+        ~DynamicArray(){
+            if(_m_arr){
+                while(_m_constructed-->0)
+                    std::allocator_traits<Alloc>::destroy(this->_m_alloc,this->_m_arr+_m_constructed);
+                std::allocator_traits<Alloc>::deallocate(this->_m_alloc,this->_m_rows*this->_m_cols);
+            }
+        }
+
+        T* operator[](size_type s){
+            return _m_arr+s*_m_cols;
+        }
+
+        const T* operator[](size_type s)const{
+            return _m_arr+s*_m_cols;
+        }
+
+        const allocator_type& get_allocator()const{
+            return _m_alloc;
+        }
+
+        size_type rows()const{
+            return _m_rows;
+        }
+
+        size_type columns()const{
+            return _m_cols;
+        }
+
+
+        pointer data(){
+            return _m_arr;
+        }
+
+        const_pointer data()const{
+            return _m_arr;
+        }
+
+        size_type size()const{
+            return _m_rows*_m_cols;
+        }
+
+        DynamicArray& operator=(const DynamicArray& arr){
+            if(_m_arr){
+                while(_m_constructed-->0)
+                    std::allocator_traits<Alloc>::destroy(this->_m_alloc,this->_m_arr+_m_constructed);
+                std::allocator_traits<Alloc>::deallocate(this->_m_alloc,this->_m_rows*this->_m_cols);
+            }
+            this->_m_arr = nullptr;
+            this->_m_constructed=0;
+            this->_m_cols = 0;
+            this->_m_rows = 0;
+            if constexpr(std::allocator_traits<Alloc>::propagate_on_container_copy_assignment::value)
+                this->_m_alloc = arr._m_alloc;
+            this->_m_arr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,arr._m_rows*arr._m_cols);
+            this->_m_rows = 1;
+            this->_m_cols = arr._m_size;
+            for(;_m_constructed<_m_cols;_m_constructed++)
+                std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_arr+this->_m_constructed,const_cast<const T&>(*(arr._m_ptr+arr._m_constructed)));
+            return *this;
+        }
+
+        DynamicArray& operator=(DynamicArray&& arr) noexcept(std::allocator_traits<Alloc>::propagate_on_container_move_assignment::value){
+            if(_m_arr){
+                while(_m_constructed-->0)
+                    std::allocator_traits<Alloc>::destroy(this->_m_alloc,this->_m_arr+_m_constructed);
+                std::allocator_traits<Alloc>::deallocate(this->_m_alloc,this->_m_rows*this->_m_cols);
+            }
+            this->_m_arr = nullptr;
+            this->_m_constructed=0;
+            this->_m_cols = 0;
+            this->_m_rows = 0;
+            if constexpr(std::allocator_traits<Alloc>::propagate_on_container_move_assignment){
+                this->_m_alloc = std::move(arr._m_alloc);
+                this->_m_arr = std::exchange(arr._m_arr,nullptr);
+                this->_m_constructed = std::move(arr._m_constructed);
+                this->_m_cols = std::move(arr._m_cols);
+                this->_m_rows = std::move(arr._m_rows);
+                return *this;
+            }else{
+                this->_m_arr = std::allocator_traits<Alloc>::allocate(this->_m_alloc,arr._m_rows*arr._m_cols);
+                this->_m_rows = 1;
+                this->_m_cols = arr._m_size;
+                for(;_m_constructed<_m_cols;_m_constructed++)
+                    std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_arr+this->_m_constructed,std::move(*(arr._m_ptr+arr._m_constructed)));
+                return *this;
+            }
+        }
+
+        void swap(DynamicArray& arr) noexcept(!std::allocator_traits<Alloc>::propagate_on_container_swap::value||std::is_nothrow_swappable_v<Alloc>){
+            using std::swap;
+            if constexpr(std::allocator_traits<Alloc>::propagate_on_container_swap::value)
+                swap(_m_alloc,arr._m_alloc);
+            swap(_m_arr,arr._m_arr);
+            swap(_m_constructed,arr._m_constructed);
+            swap(_m_rows,arr._m_rows);
+            swap(_m_cols,arr._m_cols);
+        }
+
+        friend void swap(DynamicArray& a1,DynamicArray& a2) noexcept(!std::allocator_traits<Alloc>::propagate_on_container_swap::value||std::is_nothrow_swappable_v<Alloc>){
+            a1.swap(a2);
+        }
+        
+    };
+
+    template<typename T,typename Alloc1,typename Alloc2,decltype(std::declval<const T&>()==std::declval<const T&>())* =nullptr>
+         bool operator==(const DynamicArray<T[],Alloc1>& a1,const DynamicArray<T[],Alloc2>& a2) noexcept(a1[0][0]==a2[0][0]){
+            if(a1.rows()!=a2.rows()||a1.columns()!=a2.columns())
+                return false;
+            else
+                return std::equal(a1.data(),a1.data()+a1.size(),a2.data(),a2.data()+a2.size());
+        }
+
+    template<typename T,typename Alloc1,typename Alloc2,decltype(std::declval<const T&>()==std::declval<const T&>())* =nullptr>
+        bool operator!=(const DynamicArray<T[],Alloc1>& a1,const DynamicArray<T[],Alloc2>& a2){
+            return !(a1==a2);
+        }
 }
 
 #endif

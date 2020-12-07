@@ -460,3 +460,189 @@ namespace lclib::array{
     template<typename T,typename Alloc1,typename Alloc2> DynamicArray(DynamicArray<T,Alloc2>&&,const Alloc1&) -> DynamicArray<T,Alloc1>;
 }
 ```
+
+### §3.1 class DynamicArray [array.array]
+
+1. Class template `DynamicArray` Synopsis
+```c++
+template<typename T,typename Alloc=std::allocator<T>> DynamicArray{
+    using element_type = T;
+    using reference = T&;
+    using const_reference = const T&;
+    using pointer = /*see below*/;
+    using const_pointer = /*see below*/;
+    using iterator = /*unspecified*/;
+    using const_iterator = /*unspecified*/;
+    using reverse_iterator = /*unspecified*/;
+    using const_reverse_iterator = /*unspecified*/;
+    using difference_type = /*see below*/;
+    using size_type = std::make_unsigned_t<difference_type>;
+    using allocator_type = Alloc;
+
+    DynamicArray(const Alloc& alloc=Alloc());
+    DynamicArray(const DynamicArray& arr);
+    template<typename U,typename Alloc2> DynamicArray(const DynamicArray<U,Alloc2>& arr,const Alloc& alloc);
+    DynamicArray(DynamicArray&& arr)noexcept;
+    template<typename U,typename Alloc2> DynamicArray(DynamicArray<U,Alloc2>&& arr,const Alloc& alloc);
+    template<std::size_t N> DynamicArray(const T(&)[N],const Alloc& alloc=Alloc());
+    template<std::size_t N> DynamicArray(const std::array<T,N>&,const Alloc& alloc=Alloc());
+    DynamicArray(std::initializer_list<T>,const Alloc& alloc=Alloc());
+    ~DynamicArray();
+
+    DynamicArray& operator=(const DynamicArray&);
+    DynamicArray& operator=(DynamicArray&&) noexcept(/*see below*/);
+
+    void swap(DynamicArray&) noexcept(/*see below*/);
+
+    iterator begin()noexcept;
+    const_iterator begin()const noexcept;
+    const_iterator cbegin()const noexcept;
+    iterator end()noexcept;
+    const_iterator end()const noexcept;
+    const_iterator cend()const noexcept;
+    reverse_iterator rbegin()noexcept;
+    const_reverse_iterator rbegin()const noexcept;
+    const_reverse_iterator crbegin()const noexcept;
+    reverse_iterator rend()noexcept;
+    const_reverse_iterator rend()const noexcept;
+    const_reverse_iterator crend()const noexcept;
+    
+    pointer data()noexcept;
+    const_pointer data()const noexcept;
+    size_type size()const noexcept;
+
+    reference operator[](difference_type)noexcept;
+    const_reference operator[](difference_type)const noexcept;
+    const Alloc& get_allocator()const noexcept;
+};
+```
+
+2. The class DynamicArray is a dynamic, fixed-sized, heap-allocated array of some type `T`. 
+
+3. Unless `T` is an array of unknown bound, `T` shall be *Eraseable*, *CopyInsertible* with `Alloc`, *MoveInsertible* with `Alloc`. `T` shall be an object type.
+
+4. `Alloc` shall satisfies *Allocator*. `std::allocator_traits<Alloc>::value_type` shall be exactly `T`. `Alloc` shall satsify *MoveConstructible*, and *Destructible*. Move construction with `Alloc` shall not throw exceptions, no diagnostic is required. 
+
+5. If `std::allocator_traits<Alloc>::propagate_on_container_copy_assignment` inherits from `std::true_type`, `Alloc` shall satisfy *CopyAssignable*. If `std::allocator_traits<Alloc>::propagate_on_container_move_assignment` inherits from `std::true_type`, `Alloc` shall satisfy *MoveAssignable*, and move assignment with `Alloc` shall not throw exceptions, no diagnostic is required. If `std::allocator_traits<Alloc>::propagate_on_container_swap` inherits from `std::true_type`, `Alloc` shall satisfy *Swappable*, and the call to `swap(a1,a2)`, where a1, a2 are lvalues of type `Alloc` and `swap` is looked up in the namespace std, and by argument-dependant lookup, shall not throw exceptions, no diagnostic is required. 
+
+6. `std::allocator_traits<Alloc>::pointer` shall be *CopyConstructible*, *MoveConstructible*, *CopyAssignable*, *MoveAssignable*, *Destructible*, and *Swappable*. No operation mentioned in those named requirements shall throw exceptions, no diagnostic is required. 
+
+7. If `T` satisfies *LessThanComparable*, then `DynamicArray<T,Alloc>` satisfies *LessThanComparable*.
+
+8. If `T` satisfies *EqualityComparable*, then `DynamicArray<T,Alloc>` satisfies *EqualityComparable*. 
+
+9. `DynamicArray<T,Alloc>` satisfies *Container*, *AllocatorAwareContainer*, and *ContiguousContainer*. 
+
+10. `T` shall not be an incomplete type, other than an array of an unknown bound. No diagnostic is required
+
+#### §3.1.1 Dynamic Array Member Types [array.types]
+
+`using value_type = T;`
+
+1. The value type of the array, exactly `T`.
+
+`using reference = T&;`
+
+2. The reference type of the array, which is an lvalue reference type to `T`.
+
+`using const_reference = const T&;`
+
+3. The constant reference type of the array, which an lvalue reference type to `const T`.
+
+`using pointer = typename std::allocator_traits<Alloc>::pointer;`
+
+4. The pointer type. This shall be the pointer type of the `Alloc`. 
+
+`using const_pointer = typename std::allocator_traits<Alloc>::const_pointer;`
+
+5. The constant pointer type. This shall be the `const_pointer` type of `Alloc`.
+
+`using iterator = /*see below*/;`
+
+6. An unspecified type that satisfies *Cpp17RandomAccessIterator* and *Cpp17ContiguousIterator*, which may be used as a mutable iterator into an object of type `DynamicArray<T>`.
+
+`using const_iterator = /*see below*/;`
+
+7. An unspecified type that satisfies *Cpp17RandomAccessIterator* and *Cpp17ContiguousIterator*, which may be used as an immutable iterator into an object of type `DynamicArray<T>`. `iterator` shall be implicitly convertible to `const_iterator`. 
+
+`using reverse_iterator = /*see below*/;`
+
+8. An unspecified type that satisfies *Cpp17RandomAccessIterator*, which may be used as a mutable iterator that iterates in reverse over the elements of an object of type `DynamicArray<T>`. 
+
+`using const_iterator = /*see below*/;`
+
+9. An unspecified type that satisfies *Cpp17RandomAccessIterator*, which may be used as an immutable iterator that iterates in reverse over the elements of an object of type `DynamicArray<T>`. 
+
+`using difference_type = std::pointer_traits<pointer>::difference_type;`
+
+10. The difference type between elements of this collection, which is exactly the difference type of pointers to it's elements. 
+
+
+`using size_type = std::make_unsigned_t<difference_type>;`
+
+11. The unsigned version of `difference_type`, and the size type of this collection.
+
+`using allocator_type = Alloc;`
+
+12. The allocator type of this collection, exactly `Alloc`.
+
+#### §3.1.2 DynamicArray Constructors [array.ctor]
+
+`DynamicArray(const Alloc& alloc=Alloc())`
+1. Constructs an empty array. It is unspecified whether any allocation occurs
+
+2. Postconditions:
+    - `this->get_allocator()==alloc`
+    - `this->size()==0`
+    - `DynamicArray{alloc1}==DynamicArray{alloc2}` if `alloc1` and `alloc2` are both objects of type `Alloc`, which both meet the requirements of *Allocator*, and `T` meets the requirements of *EqualityComparable*. 
+
+`DynamicArray(const DynamicArray& arr)`
+3. Constructs a new Array with the same size as `arr`, by copying the elements of `arr`.
+
+4. Preconditions:
+    - The behaviour is undefined if `arr` is *partially-constructed*
+
+5. Postconditions:
+    - `this->get_allocator()==std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`
+    - `this->size()==arr.size()`
+    - `DynamicArray(arr)==arr` if `T` meets the requirements of *EqualityComparable*, and the copy constructor of `T` is *equality-preserving*. 
+
+6. Exceptions:
+    - If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
+    - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed. 
+
+`template<typename U,typename Alloc2> DynamicArray(const DynamicArray<U,Alloc2>& arr, const Alloc& alloc)`
+
+7. Copy constructs from arr using `alloc` to allocate the underlying array.
+
+8. Mandates:
+    - `std::is_constructible_v<T,const U&>` shall be true. 
+
+9. Preconditions:
+    - The behaviour is undefined if `arr` is *partially-constructed*
+
+10. Postconditions:
+    - `this->get_allocator()==alloc`
+    - `this->size()==arr.size()`
+    - `DynamicArray{arr,alloc1}==DynamicArray{arr,alloc2}` if `alloc1` and `alloc2` are both expressions of type `Alloc`, and `arr` is an lvalue of type (possible `const`) `DynamicArray<U,Alloc2>`, if `T` meets the requirements of *EqualityComparable* and construction of `T` from a lvalue of type `const U` is an *equality-preserving* operation. 
+11. Exceptions:
+    - If an exception occurs while allocating the underlying array, the resulting object is equivalent to an array default-constructed with `std::allocator_traits<Alloc>::select_on_container_copy_construction(arr.get_allocator())`. The exception is rethrown by this constructor.
+    - If an exception occurs while constructing any element, the resulting array is *partially-constructed*. Each element which was constructed before the element under construction will remain fully constructed. 
+
+`DynamicArray(DynamicArray&& arr)noexcept;`
+
+12. Move constructs a DynamicArray from `arr`. `arr` is left in valid, but unspecified, state. 
+
+13. Preconditions:
+    - Move construction of `Alloc` shall not throw exceptions.
+
+`template<typename U,typename Alloc2> DynamicArray(DynamicArray<U,Alloc2>&& arr,const Alloc& alloc)`
+
+14. Move constructs a DynamicArray from` arr` using `alloc`. `arr` is left in a valid, but unspecified, state. 
+
+15. Mandates:
+    - `T` shall be constructible from `U&&`. 
+
+16. Preconditions:
+    - The behaviour is undefined if `arr` is *partially-constructed*
+
