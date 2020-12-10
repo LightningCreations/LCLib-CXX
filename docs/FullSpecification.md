@@ -150,7 +150,7 @@ This document is released under the terms of the GNU Free Documentation License,
 
 2. In addition to macros defined above, the implementation may define any other *unspecified* macros which start with the name `LCLIB_CXX_`. 
 
-3. A program shall not define any macro that starts with `LCLIB_CXX_`, except that the program may define the macro `LCLIB_CXX_DEBUG`. 
+3. A program shall not define any macro that starts with `LCLIB_CXX_`, except that the program may define the macro `LCLIB_CXX_DEBUG`. No diagnostic required. 
 
 ### §2.1 C++ Standard in Use
 
@@ -477,7 +477,7 @@ namespace lclib::array{
 
 1. Class template `DynamicArray` Synopsis
 ```c++
-template<typename T,typename Alloc=std::allocator<T>> DynamicArray{
+template<typename T,typename Alloc=/*see below*/> DynamicArray{
     using element_type = T;
     using reference = T&;
     using const_reference = const T&;
@@ -525,6 +525,9 @@ template<typename T,typename Alloc=std::allocator<T>> DynamicArray{
 
     reference operator[](difference_type)noexcept;
     const_reference operator[](difference_type)const noexcept;
+    reference get(difference_type);
+    const_reference get(difference_type)const;
+
     const Alloc& get_allocator()const noexcept;
 };
 ```
@@ -533,19 +536,21 @@ template<typename T,typename Alloc=std::allocator<T>> DynamicArray{
 
 3. Unless `T` is an array of unknown bound, `T` shall be *Eraseable*, *CopyInsertible* with `Alloc`, *MoveInsertible* with `Alloc`. `T` shall be an object type.
 
-4. `Alloc` shall satisfies *Allocator*. `std::allocator_traits<Alloc>::value_type` shall be exactly `T`. `Alloc` shall satsify *MoveConstructible*, and *Destructible*. Move construction with `Alloc` shall not throw exceptions, no diagnostic is required. 
+4. `Alloc` shall satisfies *Allocator*. `std::allocator_traits<Alloc>::value_type` shall be `T`, if `T` is not an array of an unknown bound, and otherwise shall be `std::remove_extent_t<T>`. `Alloc` shall satsify *MoveConstructible*, and *Destructible*. Move construction with `Alloc` shall not throw exceptions, no diagnostic is required. 
 
 5. If `std::allocator_traits<Alloc>::propagate_on_container_copy_assignment` inherits from `std::true_type`, `Alloc` shall satisfy *CopyAssignable*. If `std::allocator_traits<Alloc>::propagate_on_container_move_assignment` inherits from `std::true_type`, `Alloc` shall satisfy *MoveAssignable*, and move assignment with `Alloc` shall not throw exceptions, no diagnostic is required. If `std::allocator_traits<Alloc>::propagate_on_container_swap` inherits from `std::true_type`, `Alloc` shall satisfy *Swappable*, and the call to `swap(a1,a2)`, where a1, a2 are lvalues of type `Alloc` and `swap` is looked up in the namespace std, and by argument-dependant lookup, shall not throw exceptions, no diagnostic is required. 
 
 6. `std::allocator_traits<Alloc>::pointer` shall be *CopyConstructible*, *MoveConstructible*, *CopyAssignable*, *MoveAssignable*, *Destructible*, and *Swappable*. No operation mentioned in those named requirements shall throw exceptions, no diagnostic is required. 
 
-7. If `T` satisfies *LessThanComparable*, then `DynamicArray<T,Alloc>` satisfies *LessThanComparable*.
+7. If `T` satisfies *LessThanComparable*, then `DynamicArray<T,Alloc>` satisfies *LessThanComparable*, provided `T` is not an array of an unknown bound.
 
 8. If `T` satisfies *EqualityComparable*, then `DynamicArray<T,Alloc>` satisfies *EqualityComparable*. 
 
-9. `DynamicArray<T,Alloc>` satisfies *Container*, *AllocatorAwareContainer*, and *ContiguousContainer*. 
+9. `DynamicArray<T,Alloc>` satisfies *Container*, *AllocatorAwareContainer*, and *ContiguousContainer*, provided `T` is not an array of an unknown bound.
 
 10. `T` shall not be an incomplete type, other than an array of an unknown bound. No diagnostic is required
+
+11. When `Alloc` is not specified and the template is not deduced according to a deduction guide, it shall be `std::allocator<T>` when `T` is not an array of an unknown bound, and `std::allocator<std::remove_extent_t<T>>` otherwise. 
 
 #### §4.1.1 Dynamic Array Member Types [array.types]
 
@@ -1021,7 +1026,7 @@ e pointer type docs from
 
 `reference operator[](difference_type i)noexcept`
 
-`const_reference operator[](different_type i)noexcept`
+`const_reference operator[](difference_type i)noexcept`
 
 1. Indexes the array.
 
@@ -1034,6 +1039,19 @@ e pointer type docs from
     - `&arr[i]==arr.data()+i`, if `arr` is an expression of type `DynamicArray<T,Alloc>`
 
 4. The behaviour is undefined if a reference returned by the const overload is used to modify any element of the array, except any `mutable` subobjects of `T`. 
+
+`reference get(difference_type i)`
+
+`const_reference get(difference_type i)const`
+
+5. Performs checked (throwing) indexing of the array
+
+6. Postconditions:
+   - `&arr.get(i)==&arr[i]` given `0<=i<arr.size()`, if `arr` is an expression of type `DynamicArray<T,Alloc>`
+
+7. Exceptions:
+    - If *i* is out-of bounds (`!(0<=i<arr.size())`), throws an unspecified exception that matches a handler of type `std::out_of_range`.
+    - If `(*this)` is *partially-constructed*, and the *i*th element is not fully constructed, throws an unspecified exception that matches a handler of type `std::logic_error`. 
 
 #### §4.1.8 DynamicArray allocator [array.alloc]
 
@@ -1088,7 +1106,7 @@ e pointer type docs from
 8. Compares the elements of `arr1` and `arr2` for equality. An equivalent expression to `std::equal(begin(arr1),end(arr1),begin(arr2),end(arr2))`
 
 9. Requires:
-    - Given `t1`, `t2` are expressions of type `T`, `t1==t2` shall be well-formed in a context that only considers the associated namespaces of `T`. 
+    - Given `t1`, `t2` are expressions of type `T`, `t1==t2` shall be well-formed in a context that only considers operator functions defined in the associated namespaces of `T` or built-in operators. 
     - `T` shall not be an array of an unknown bound
 
 10. Preconditions:
@@ -1102,6 +1120,163 @@ e pointer type docs from
 12. Compares two arrays for equality. The expression `arr1!=arr2` is equivalent to `!(arr1==arr2)`.
 
 13. Requires:
-    - Given `t1`, `t2` are expressions of type `T`, `t1==t2` shall be well-formed in a context that only considers the associated namespaces of `T`. 
+    - Given `t1`, `t2` are expressions of type `T`, `t1==t2` shall be well-formed in a context that only considers operator functions defined in the associated namespaces of `T` or built-in operators. 
     - `T` shall not be an array of an unknown bound
 
+`template<typename T,typename Alloc1,typename Alloc2> bool operator<(const DynamicArray<T,Alloc1>& arr1,const DynamicArray<T,Alloc2>& arr2) noexcept(/*see below*/)`
+
+14. Lexicographically compares two arrays as though by `std::lexicographical_compare(begin(arr1),end(arr1),begin(arr2),end(arr2))`. 
+
+15. Requires:
+    - Given `t1`, `t2` are expressions of type `T`, `t1<t2` shall be well-formed in a context that only considers operator functions defined in the associated namespaces of `T` or built-in operators. 
+    - `T` shall not be an array of an unknown bound
+
+16. Preconditions:
+    - If the class template `std::less<T>` is a user-provided partial-specialization, the expression `t1<t2` shall be consistent with `std::less<T>{}(t1,t2)`
+
+17. Postconditions:
+    - If the expression `t1<t2` selects a builtin comparison operator comparing pointers, then the comparison shall use the total order imposed by the partial-specialization `std::less<T*>`.
+    - If `T` is a pointer type, or satisfies *LessThanComparable*, then `DynamicArray<T,Alloc>` satisfies *LessThanComparable*.
+
+`template<typename T,typename Alloc1,typename Alloc2> bool operator>(const DynamicArray<T,Alloc1>& arr1,const DynamicArray<T,Alloc2>& arr2) noexcept(/*see below*/)`
+
+18. Lexicographically compares two arrays. Equivalent to `arr2<arr1`.
+
+19. Requires:
+    - Given `t1`, `t2` are expressions of type `T`, `t1<t2` shall be well-formed in a context that only considers operator functions defined in the associated namespaces of `T` or built-in operators. 
+    - `T` shall not be an array of an unknown bound
+
+`template<typename T,typename Alloc1,typename Alloc2> bool operator<=(const DynamicArray<T,Alloc1>& arr1,const DynamicArray<T,Alloc2>& arr2) noexcept(/*see below*/)`
+
+20. Lexicographically compares two arrays. Equivalent to `(arr1<arr2)||(arr1==arr2)`. 
+
+21. Requires:
+    - Given `t1`, `t2` are expressions of type `T`, `t1<t2` shall be well-formed in a context that only considers operator functions defined in the associated namespaces of `T` or built-in operators. 
+    - `T` shall not be an array of an unknown bound
+
+`template<typename T,typename Alloc1,typename Alloc2> bool operator>=(const DynamicArray<T,Alloc1>& arr1,const DynamicArray<T,Alloc2>& arr2) noexcept(/*see below*/)`
+
+22. Lexicographically compares two arrays. Equivalent to `(arr1>arr2)||(arr1==arr2)`.
+
+23. Requires:
+    - Given `t1`, `t2` are expressions of type `T`, `t1<t2` shall be well-formed in a context that only considers operator functions defined in the associated namespaces of `T` or built-in operators. 
+    - `T` shall not be an array of an unknown bound
+
+### §4.3 Deduction Guides for DynamicArray
+
+`template<typename T,std::size_t N> DynamicArray(const T(&)[N])->DynamicArray<T,std::allocator<T>>`
+
+1. Requires:
+    - `T` shall not be an array type.
+
+`template<typename T,std::size_t N,typename Alloc> DynamicArray(const T(&)[N],Alloc)->DynamicArray<T,Alloc>`
+
+2. Requires:
+    - `T` shall not be an array type.
+
+`template<typename T,std::size_t N> DynamicArray(std::array<T,N>)->DynamicArray<T,std::allocator<T>>`
+
+`template<typename T,std::size_t N,typename Alloc> DynamicArray(std::array<T,N>,Alloc)->DynamicArray<T,Alloc`
+
+`template<typename T> DynamicArray(std::initializer_list<T>)->DynamicArray<T,std::allocator<T>>`
+
+`template<typename T,typename Alloc> DynamicArray(std::initializer_list<T>,Alloc)->DynamicArray<T,Alloc>`
+
+
+`template<typename Container> DynamicArray(const Container&) -> DynamicArray</*see below*/>`
+
+3. Requires:
+    - `Container` shall not be an array type, including an array of unknown bound, a specialization of `std::array`, `std::initializer_list`, or `DynamicArray`. 
+    - Given `c` is an expression of type `Container`, all of the following expressions shall be well-formed: `begin(c)`, `end(c)`, `size(c)`, where `begin`, `end`, and `size` are looked up in the associated namespaces of `Container` and the namespace `std`.  
+
+4. Returns:
+    - `DynamicArray<std::remove_const_t<std::remove_reference_t<decltype(*begin(c))>>>`
+
+`template<typename Container,typename Alloc> DynamicArray(const Container&,Alloc) -> DynamicArray</*see below*/,Alloc>`
+
+5. Requires:
+    - `Container` shall not be an array type, including an array of unknown bound, a specialization of `std::array`, `std::initializer_list`, or `DynamicArray`. 
+    - Given `c` is an expression of type `Container`, all of the following expressions shall be well-formed: `begin(c)`, `end(c)`, `size(c)`, where `begin`, `end`, and `size` are looked up in the associated namespaces of `Container` and the namespace `std`.  
+    - `std::iterator_traits<Alloc>::iterator_category` shall not name a member type, and shall not be an integer type (This prevents conflicts between this deduction guide and the ones for ForwardIterators).
+
+6. Returns:
+    - `DynamicArray<std::remove_const_t<std::remove_reference_t<decltype(*begin(c))>>,Alloc>`
+
+`template<typename ForwardIter> DynamicArray(ForwardIter,ForwardIter) -> DynamicArray</*see below*/>;`
+
+`template<typename ForwardIter,typename Size> DynamicArray(ForwardIterator,Size) -> DynamicArray</*see below*/>` 
+
+7. Requires:
+    - `std::iterator_traits<ForwardIter>::iterator_category` shall name a member type, that inherits from `std::forward_iterator_tag`.
+    - `Size` shall be an integer type, and not the same type as `ForwardIter`. 
+    
+
+8. Returns:
+    - `DynamicArray<std::iterator_traits<ForwardIterator>::element_type>`
+
+`template<typename ForwardIter,typename Alloc> DynamicArray(ForwardIter,ForwardIter,Alloc) -> DynamicArray</*see below*/,Alloc>;`
+
+`template<typename ForwardIter,typename Size,Alloc> DynamicArray(ForwardIterator,Size,Alloc)-> DynamicArray</*see below*/,Alloc>`
+
+9. Requires:
+    - `std::iterator_traits<ForwardIter>::iterator_category` shall name a member type, that inherits from `std::forward_iterator_tag`.
+    - `Size` shall be an integer type, and not the same type as `ForwardIter`.
+    
+### §4.4 DynamicArray<T[],Alloc> Partial Specialization [array.multi]
+
+```c++
+template<typename T,typename Alloc> struct DynamicArray<T[],Alloc>{
+    using element_type = T;
+    using allocator_type = Alloc;
+    using pointer = typename std::allocator_traits<Alloc>::pointer;
+    using const_pointer = typename std::allocator_traits<Alloc>::const_pointer;
+    using difference_type = typename std::pointer_traits<pointer>::difference_type;
+    using size_type = std::make_unsigned_t<difference_type>;
+
+    DynamicArray(const Alloc& alloc=Alloc());
+    DynamicArray(size_type rows,size_type cols,const Alloc& alloc=Alloc());
+    
+    DynamicArray(const DynamicArray& arr);
+    explicit DynamicArray(const DynamicArray<T,Alloc>& arr);
+    DynamicArray(DynamicArray&& arr) noexcept;
+    explicit DynamicArray(DynamicArray<T,Alloc>&& arr) noexcept;
+    
+    template<typename U,typename Alloc2> DynamicArray(const DynamicArray<U[],Alloc2>& arr,const Alloc& alloc);
+    template<typename U,typename Alloc2> explicit DynamicArray(const DynamicArray<U,Alloc2>& arr,const Alloc& alloc);
+    template<typename U,typename Alloc2> DynamicArray(DynamicArray<U[],Alloc2>&& arr,const Alloc& alloc);
+    template<typename U,typename Alloc2> explicit DynamicArray(DynamicArray<U,Alloc2>&& arr,const Alloc& alloc);
+
+    template<typename U,std::size_t N,std::size_t M> DynamicArray(const U(&arr)[N][M],const Alloc& alloc=Alloc());
+
+    ~DynamicArray();
+
+    DynamicArray& operator=(const DynamicArray& arr);
+    DynamicArray& operator=(DynamicArray&& arr) noexcept(/*see below*/);
+
+    size_type rows()const noexcept;
+    size_type columns()const noexcept;
+
+    size_type size()const noexcept;
+
+    pointer data()noexcept;
+    const_pointer data()const noexcept;
+
+    /*see below*/ operator[](difference_type i)noexcept;
+    /*see below*/ operator[](difference_type i)const noexcept;
+    /*see below*/ get(difference_type i);
+    /*see below*/ get(difference_type i)const;
+    reference get(difference_type i,difference_type j);
+    const_reference get(difference_type i,difference_type j)const;
+};
+```
+
+
+1. A partial specialization of `DynamicArray` for an array of an unknown bound `T[]` shall be provided.
+
+2. `Alloc` shall satisfy the requirements of *Allocator*. `std::allocator_traits<Alloc>::element_type` shall be exactly `T`. 
+
+3. This partial specialization satisfies *EqualityComparable* if `T` satisfies *EqualityComparable*. 
+
+4. _Note 1 - This partial specialization does not satisfy LessThanComparable, Container, ContiguousContainer, or AllocatorAwareContainer - End Note_
+
+#### §4.4.1 

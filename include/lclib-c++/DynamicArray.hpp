@@ -18,11 +18,21 @@
 #endif
 
 #include <lclib-c++/bits/Helpers.hpp>
+#include <lclib-c++/TypeTraits.hpp>
 
 namespace lclib::array{
 
+    namespace _detail{
+        template<typename T> struct default_allocator{
+            using type = std::allocator<T>;
+        };
 
-    template<typename T,typename Alloc=std::allocator<T>> struct DynamicArray{
+        template<typename T> struct default_allocator<T[]>{
+            using type = std::allocator<T>;
+        };
+    }
+
+    template<typename T,typename Alloc=typename _detail::default_allocator<T>::type> struct DynamicArray{
     public:
         static_assert(std::is_same_v<T,typename std::allocator_traits<Alloc>::value_type>);
         static_assert(std::is_object_v<T>);
@@ -121,12 +131,12 @@ namespace lclib::array{
                     std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+this->_m_size,t); 
             }
         
-        template<typename Container,std::enable_if_t<std::is_constructible_v<T,decltype(* _detail::customization::adl_and_std::begin(std::declval<Container>()))>>* =nullptr,
-            std::void_t<decltype(_detail::customization::adl_and_std::size(std::declval<Container>()))>* =nullptr>
+        template<typename Container,std::enable_if_t<std::is_constructible_v<T,decltype(* lclib::_detail::customization::adl_and_std::begin(std::declval<Container>()))>>* =nullptr,
+            std::void_t<decltype(lclib::_detail::customization::adl_and_std::size(std::declval<Container>()))>* =nullptr>
             explicit DynamicArray(Container&& container,const Alloc& alloc = Alloc()) : _m_ptr{}, _m_size(), _m_constructed{}, _m_alloc{alloc}{
-                _m_ptr = std::allocator_traits<Alloc>::allocate(_m_alloc,_detail::customization::adl_and_std::size(std::forward<Container>(container)));
-                _m_size = _detail::customization::adl_and_std::size(std::forward<Container>(container));
-                auto iter = _detail::customization::adl_and_std::begin(std::forward<Container>(container));
+                _m_ptr = std::allocator_traits<Alloc>::allocate(_m_alloc,lclib::_detail::customization::adl_and_std::size(std::forward<Container>(container)));
+                _m_size = lclib::_detail::customization::adl_and_std::size(std::forward<Container>(container));
+                auto iter = lclib::_detail::customization::adl_and_std::begin(std::forward<Container>(container));
                 for(;_m_constructed<_m_size;_m_constructed++,iter++)
                     std::allocator_traits<Alloc>::construct(this->_m_alloc,this->_m_ptr+this->_m_constructed,*iter);
 
@@ -151,11 +161,23 @@ namespace lclib::array{
             }
         }
 
-        reference operator[](size_type t){
+        reference operator[](difference_type t)noexcept{
             return _m_ptr[t];
         }
 
-        const_reference operator[](size_type t)const{
+        const_reference operator[](difference_type t)const noexcept{
+            return _m_ptr[t];
+        }
+
+        reference get(difference_type t){
+            if(t<0||_m_constructed<=t)
+                throw std::out_of_range{"index must be in-bounds for get"};
+            return _m_ptr[t];
+        }
+
+        const_reference get(difference_type t)const{
+            if(t<0||_m_constructed<=t)
+                throw std::out_of_range{"index must be in-bounds for get"};
             return _m_ptr[t];
         }
 
@@ -389,8 +411,8 @@ namespace lclib::array{
             return a1>a2||a1==a2;
         }
 
-    template<typename T,std::size_t N> DynamicArray(const T(&)[N])->DynamicArray<T>;
-    template<typename T,std::size_t N,typename Alloc> DynamicArray(const T(&)[N],const Alloc&)->DynamicArray<T,Alloc>;
+    template<typename T,std::size_t N,std::enable_if_t<!std::is_array_v<T>>* =nullptr> DynamicArray(const T(&)[N])->DynamicArray<T>;
+    template<typename T,std::size_t N,typename Alloc,std::enable_if_t<!std::is_array_v<T>>* =nullptr> DynamicArray(const T(&)[N],const Alloc&)->DynamicArray<T,Alloc>;
     template<typename T,std::size_t N> DynamicArray(const std::array<T,N>&)->DynamicArray<T>;
     template<typename T,std::size_t N,typename Alloc> DynamicArray(const std::array<T,N>&,const Alloc&)->DynamicArray<T,Alloc>;
     template<typename T> DynamicArray(std::initializer_list<T>) -> DynamicArray<T>;
@@ -398,7 +420,64 @@ namespace lclib::array{
     template<typename T,typename Alloc1,typename Alloc2> DynamicArray(const DynamicArray<T,Alloc2>&,const Alloc1&) -> DynamicArray<T,Alloc1>;
     template<typename T,typename Alloc1,typename Alloc2> DynamicArray(DynamicArray<T,Alloc2>&&,const Alloc1&) -> DynamicArray<T,Alloc1>;
 
+    namespace _detail{
+
+        template<typename T> struct meets_container_requirements : std::true_type{};
+        template<typename T> struct meets_container_requirements<T[]> : std::false_type{};
+        template<typename T,std::size_t N> struct meets_container_requirements<T[N]> : std::false_type{};
+        template<typename T,std::size_t N> struct meets_container_requirements<std::array<T,N>> : std::false_type{};
+        template<typename T> struct meets_container_requirements<std::initializer_list<T>> : std::false_type{};
+        template<typename T,typename Alloc> struct meets_container_requirements<DynamicArray<T,Alloc>> : std::false_type{};
+
+        template<typename T> using detect_iterator_category = typename std::iterator_traits<T>::iterator_category;
+        
+    }
+
+    template<typename Container,
+        std::enable_if_t<_detail::meets_container_requirements<Container>::value>* =nullptr,
+        std::void_t<decltype(lclib::_detail::customization::adl_and_std::begin(std::declval<const Container&>())),
+            decltype(lclib::_detail::customization::adl_and_std::end(std::declval<const Container&>())),
+            decltype(lclib::_detail::customization::adl_and_std::size(std::declval<const Container&>()))
+        >* =nullptr> DynamicArray(const Container&) -> DynamicArray<decltype(*lclib::_detail::customization::adl_and_std::begin(std::declval<const Container&>()))>;
+
+    template<typename Container,typename Alloc,
+        std::enable_if_t<_detail::meets_container_requirements<Container>::value>* =nullptr,
+        std::void_t<decltype(lclib::_detail::customization::adl_and_std::begin(std::declval<const Container&>())),
+            decltype(lclib::_detail::customization::adl_and_std::end(std::declval<const Container&>())),
+            decltype(lclib::_detail::customization::adl_and_std::size(std::declval<const Container&>()))
+        >* =nullptr,
+        std::enable_if_t<!std::disjunction_v<
+            lclib::type_traits::is_detected<_detail::detect_iterator_category,Alloc>,
+            std::is_integral<Alloc>
+        >>* =nullptr> DynamicArray(const Container&,const Alloc&) -> DynamicArray<decltype(*lclib::_detail::customization::adl_and_std::begin(std::declval<const Container&>())),Alloc>;
     
+    template<typename ForwardIter,std::enable_if_t<
+            std::is_base_of_v<std::forward_iterator_tag,typename std::iterator_traits<ForwardIter>::iterator_category>
+        >* =nullptr,
+        std::enable_if_t<!std::is_integral_v<ForwardIter>>* =nullptr>
+            DynamicArray(ForwardIter,ForwardIter) -> DynamicArray<typename std::iterator_traits<ForwardIter>::element_type>;
+
+    template<typename ForwardIter,typename Size,std::enable_if_t<
+            std::is_base_of_v<std::forward_iterator_tag,typename std::iterator_traits<ForwardIter>::iterator_category>
+        >* =nullptr,
+        std::enable_if_t<!std::is_integral_v<ForwardIter>>* =nullptr,
+        std::enable_if_t<std::is_integral_v<Size>>* =nullptr>
+            DynamicArray(ForwardIter,Size) -> DynamicArray<typename std::iterator_traits<ForwardIter>::element_type>;
+
+    template<typename ForwardIter,typename Alloc,std::enable_if_t<
+            std::is_base_of_v<std::forward_iterator_tag,typename std::iterator_traits<ForwardIter>::iterator_category>
+        >* =nullptr,
+        std::enable_if_t<!std::is_integral_v<ForwardIter>>* =nullptr>
+            DynamicArray(ForwardIter,ForwardIter,Alloc) -> DynamicArray<typename std::iterator_traits<ForwardIter>::element_type,Alloc>;
+
+    template<typename ForwardIter,typename Size,typename Alloc,std::enable_if_t<
+            std::is_base_of_v<std::forward_iterator_tag,typename std::iterator_traits<ForwardIter>::iterator_category>
+        >* =nullptr,
+        std::enable_if_t<!std::is_integral_v<ForwardIter>>* =nullptr,
+        std::enable_if_t<std::is_integral_v<Size>>* =nullptr>
+            DynamicArray(ForwardIter,Size,Alloc) -> DynamicArray<typename std::iterator_traits<ForwardIter>::element_type,Alloc>;
+
+
     template<typename T,typename Alloc> struct DynamicArray<T[],Alloc>{
     public:
         static_assert(std::is_same_v<T,typename std::allocator_traits<Alloc>::value_type>);
@@ -417,6 +496,36 @@ namespace lclib::array{
         size_type _m_cols;
         size_type _m_constructed;
         allocator_type _m_alloc;
+
+        template<typename ref,typename const_ref> struct _slice{
+            pointer _m_arr;
+            size_type _m_len;
+
+            ref operator[](difference_type i)noexcept{
+                return _m_arr[i];
+            }
+
+            const_ref operator[](difference_type i)const noexcept{
+                return _m_arr[i];
+            }
+
+            ref get(difference_type i){
+                if(i<0||_m_len<=i)
+                    throw std::out_of_range{"index to get out-of-bounds"};
+                else
+                    return _m_arr[i];
+                
+            }
+
+            const_ref get(difference_type i)const{
+                if(i<0||_m_len<=i)
+                    throw std::out_of_range{"index to get out-of-bounds"};
+                else
+                    return _m_arr[i];
+                
+            }
+        };
+
     public:
         DynamicArray(const Alloc& alloc = Alloc()) : _m_arr{}, _m_rows{}, _m_cols{}, _m_constructed{}, _m_alloc{alloc}{}
 
@@ -502,12 +611,58 @@ namespace lclib::array{
             }
         }
 
-        T* operator[](size_type s){
+        T* operator[](difference_type i){
+            return _m_arr+i*_m_cols;
+        }
+
+        const T* operator[](difference_type s)const{
             return _m_arr+s*_m_cols;
         }
 
-        const T* operator[](size_type s)const{
-            return _m_arr+s*_m_cols;
+        _slice<reference,const_reference> get(difference_type i){
+            if(i<0)
+                throw std::out_of_range{"index must be in-bounds for get"};
+            else if(i<_m_constructed/_m_cols)
+                return {_m_arr,_m_cols};
+            else if(i==_m_constructed/_m_cols)
+                return {_m_arr,_m_constructed%_m_cols};
+            else
+                throw std::out_of_range{"index must be in-bounds for get"};
+        }
+
+        _slice<const_reference,const_reference> get(difference_type i)const{
+            if(i<0)
+                throw std::out_of_range{"index must be in-bounds for get"};
+            else if(i<_m_constructed/_m_cols)
+                return {_m_arr,_m_cols};
+            else if(i==_m_constructed/_m_cols)
+                return {_m_arr,_m_constructed%_m_cols};
+            else
+                throw std::out_of_range{"index must be in-bounds for get"};
+        }
+
+        reference get(difference_type i,difference_type j){
+            if(i<0||j<0||_m_rows<=i||_m_cols<=i)
+                throw std::out_of_range{"indecies must be in-bounds for get"};
+            else{
+                difference_type idx = i*_m_cols+j;
+                if(idx<_m_constructed)
+                    return _m_arr[idx];
+                else
+                    throw std::out_of_range{"indecies must be in-bounds for get"};
+            }
+        }
+
+        const_reference get(difference_type i,difference_type j)const{
+            if(i<0||j<0||_m_rows<=i||_m_cols<=i)
+                throw std::out_of_range{"indecies must be in-bounds for get"};
+            else{
+                difference_type idx = i*_m_cols+j;
+                if(idx<_m_constructed)
+                    return _m_arr[idx];
+                else
+                    throw std::out_of_range{"indecies must be in-bounds for get"};
+            }
         }
 
         const allocator_type& get_allocator()const{
@@ -597,7 +752,6 @@ namespace lclib::array{
         }
 
         
-        
     };
 
     template<typename T,typename Alloc1,typename Alloc2,decltype(std::declval<const T&>()==std::declval<const T&>())* =nullptr>
@@ -612,6 +766,11 @@ namespace lclib::array{
         bool operator!=(const DynamicArray<T[],Alloc1>& a1,const DynamicArray<T[],Alloc2>& a2) noexcept(noexcept(a1[0][0]==a2[0][0])){
             return !(a1==a2);
         }
+
+    template<typename T,std::size_t N,std::size_t M> DynamicArray(const T(&)[N][M]) -> DynamicArray<T[]>;
+
+    template<typename T,typename Alloc,std::size_t N,std::size_t M> DynamicArray(const T(&)[N][M],Alloc) -> DynamicArray<T[],Alloc>;
+    
 }
 
 #endif
