@@ -76,28 +76,26 @@ The use of phrase `The behaviour of ... is undefined`, the phrase `The behaviour
  or a lack of definition of behaviour may also be used to indicate Undefined Behaviour. 
  There is no distinction between any of these uses, all describe Behaviour which is Undefined.
  
-_Note - Valid responses to undefined behaviour include (but are not limited to) to assign meaning to it,
- discard the behaviour, ignore the behaviour (potentially causing further issues with well-defined constructs),
- cause or report an error. - End Note_
+_Note - Valid responses to undefined behaviour include (but are not limited to) assigning meaning to it, discarding the behaviour, ignoring the behaviour (potentially causing further issues with well-defined constructs), and causing or reporting an error. - End Note_
+
+_Note - In the presence of undefined behaviour, all requirements of this specification are vacated, not just those of the construct that has the undefined behaviour. This includes any code preceding the first occurance of undefined behaviour - End Note_
 
 ### Strictly-conforming Program
 
 A well-formed Program which is considered Strictly-conforming by the C++ standard in use, 
  except that it includes headers defined by this specification,
- and makes use of no constructs which this specification considers Unspecified, Implementation-defined,
-  or Undefined, and violates no minimum implementation limits imposed by this specification. 
+ and makes use of no constructs which this specification considers Unspecified, Implementation-defined, or Undefined, and violates no minimum implementation limits imposed by this specification. 
   
 ### Correct Program
 
 A well-formed Program which is considered correct by the C++ Standard in use,
- and which makes no use of constructs which this specification assigns Undefined Behaviour,
+ and which makes no use of constructs which this specification considers Undefined,
  and which violates no limit validly imposed by the implementation. 
  
  _Note - A runtime construct which is not evaluated is not considered to be made use of - End Note_
 ### Ill-formed
 
-A program which makes use of either an erroneous C++ construct or construct defined by this specification,
- for which the implementation shall cause a diagnostic. 
+A program which makes use of either an erroneous C++ construct or construct defined by this specification, for which the implementation shall cause a diagnostic. 
  
 ### Ill-formed, no diagnostic required
 
@@ -129,30 +127,34 @@ Any identifier which starts with a single underscore within the `lclib` namespac
  and any identifiers within it are reserved for the implementation. 
 The behaviour of a program which names an identifier of such a form is undefined.
 
+No program which includes a header defined by this specification shall
+ `#define` or `#undef` any name which may be reserved, an identifier which is reserved by C++,
+  a contextual keyword in C++, the name of any standard attribute (except that likely and unlikely may be defined as function-like macros), 
+  or any name which is declared by this specification or the Standard Library of the C++ Standard in use. 
+
+
 _Note - This is intended to allow the implementation to define constructs,
- needed to provide the specified constructs
+ needed to provide the specified constructs - End Note_
 
 ## lclib Namespace
 
 All constructs defined by this specification are made available in the `lclib` namespace,
  or any subnamespace are protected by this specification. 
-The behaviour of a program that defines names within such namespaces is undefined.
+The behavior of a program that defines names within such namespaces is undefined.
 
 ## Transitive Dependencies
 
-The behaviour of a program which names a symbol defined by this
- specification is undefined, unless the symbol is defined in a header included by the program,
- or the symbol exists in a header, which any header included by the program is permitted to 
- make symbols available from, or that symbol is an overloaded operator, or function,
-  referenced by argument-dependent lookup. 
-  
+Even where not permitted or required, including any header defined by this specification
+ may make available any symbol defined in any other such header. 
+
+Including any header defined by this api may make available any symbols defined
+ in any standard library header.  
  
 _Note - This allows for implementations to include other headers from this api,
  even where those headers are not permitted or required to be included, 
  to allow implementations to satisfy requirements in this api - End Note_
 
-Including any header defined by this api may make available any symbols defined
- in any standard library header. 
+
 
 If the synopsis of a header has the line `#include <header>` then the symbols defined by `<header>`
  shall be made available to programs which include the api header. 
@@ -165,10 +167,12 @@ The behaviour is undefined if any function defined by this api appears in any
  or implicit call through an overloaded operator, user-defined-literal, or `new`, `delete`, `new[]`, or `delete[]` expression. 
 
 _Note - In particular, taking the address of a function or member-function, 
- or decaying a function to a pointer-to-function has undefined behaviour - End Note_
+ or decaying a function to a pointer-to-function has undefined behaviour.
+ This allows the implementation to implement functions as lambda expressions - End Note_
 
+_Note - The C++ Standard library does not permit macro-suppressed function calls for its standard library functions - End Note_
 
-Additionally, the behaviour is undefined if a non-member function declared by this api,
+Additionally, the behaviour is undefined if a non-member function declared by this specification,
  with any of the following names, is called, except if the call is resolved through Argument-dependent lookup:
 * swap
 * begin
@@ -179,67 +183,39 @@ Additionally, the behaviour is undefined if a non-member function declared by th
 * rend
 * crbegin
 * crend
-* get, if the function is declared as a function template. 
+* get, if the function is declared as a function template.
 
 _Note - This allows these functions to be declared in a method which is only findable through ADL - End Note_
 
 
 ## Operators
 
-The behaviour of a program that explicitly calls to
- any overloaded operator function is undefined, unless:
+The behaviour of a program that explicitly calls
+ any overloaded operator function defined by this specification is undefined, unless:
 * The operator function is an overload of `operator->()`, OR
 * The operator function is an overload of `operator new`, `operator delete`, `operator new[]`, or `operator delete[]`,  
 
 For the purposes of this rule an explicit call is a call to the operator function,
  that explicitly uses function call syntax, such as `v.operator+(b)`. 
  For the function call operator `v(args...)` is not an explicit call,
-  though `v.operator()(args...)` is. 
+  though `v.operator()(args...)` is (and is thus undefined behaviour). 
   
-_Note - This is provided to allow implementations flexibility in how operators,
+_Note - This is provided to allow implementations considerable flexibility in how operators,
  are defined.  In particular, in C++ 20, implementations may leave comparison operators 
- undefined and provide `x < y` using the C++ 20 rewritten candidates if `x <=> y` is valid
+ undefined and provide `x < y` using the C++ 20 rewritten candidates if `x <=> y` is valid.
 - End Note_
 
 ## Templates
 
-
-### Template Specialization Policy
-
-A Program may Specialize templates provided by lclib-c++, on user-provided types,
- unless the particular template says otherwise, provided the type satisfies the requirements of that template. 
-
-If the specialization is a partial specialization, at least one type that is specialized must either be a user-provided type,
- or a partial specialization on a template which is not defined by either the C++ Standard Library or lclib-c++. 
- 
-A type T is a user-provided type if: 
-* It is a class or enumeration type or instantiation of a class template,
- that is declared by neither the C++ Standard Library or lclib-c++
-* It is an instantiation of a class template for which at least one type template parameter is a user-provided type, 
-   transitively.
-* It is a pointer or reference to a user-provided type
-* It is an array, including an array of an unknown bound, of a user-provided type.
-* It is a instantiation of a template defined by either the C++ Standard Library or lclib-c++, 
- where the specialization used was not defined by either the C++ Standard Library or lclib-c++.
-
-This specialization policy also applies to specializations of standard library templates
- (specifically, C++ Standard Templates cannot be specialized with types solely provided by lclib-c++).
- 
-The behavior of a program that violates these requirements is undefined. 
-
 ### Incomplete Types
 
 Notwithstanding templates defined in the `<lclib-c++/TypeTraits.hpp>` header,
- by default, templates may not be instantiated with incomplete types. The behavior of instantiating a template 
-  with one or more incomplete types is undefined. 
+ by default, templates may not be instantiated with incomplete types. The behavior of instantiating a template with one or more incomplete types is undefined, except as otherwise provided. 
   
 Templates defined in the TypeTraits Header have special rules. 
-Most templates require that all instantiating parameters are either complete, an array of an unknown bound,
- or (possibly cv-qualfied) void. See documentation of that header for details. 
+Most templates require that all instantiating parameters are either complete, an array of an unknown bound, or (possibly cv-qualfied) void. See documentation of that header for details. 
  
 The behavior of violating these rules is undefined.  
-
-### Macros
 
 A program which includes any header defined by this specification
  may not define any macro which is a reserved identifier in C++,
@@ -266,7 +242,7 @@ A user-provided type is one of the following:
 * The instantiation of a template (which may be a specialization) defined by C++ Standard 
  or this specification, where at least one template parameter is a user-provided type,
  and the C++ Standard or this specification allows that template to be specialized with that type
- on that argument.
+ on that argument (reguardless of whether such a specialization is actually defined).
 * An array, including an array of unknown bound,
  where the component type is a user-provided type.
 
@@ -277,7 +253,24 @@ Additionally, the template may impose any additional constraints on specializati
 A program may define a partial specialization of any template,
  provided any instantiation of the partial specialization satisfies the above requirements.
 
-The behaviour of a program that specializes a template defined by this specification
- in violation of these rules is undefined. 
- 
+A program additionally may not define partial or full specializations of 
+ any type in the C++ Standard Library in violation of these rules (though is not exclusively permitted to do so under these rules), except that the primary template rule does not apply.
+
+The behaviour of a program that specializes a template defined by this specification or the C++ Standard in violation of these rules, is undefined. 
+
+
+## Named Requirements
+
+This specification may reference a number of named requirements defined by the C++ Standard, as well as others defined by this specification. 
+
+Each type in this library may satisfy any number of these requirements as listed. 
+Any type in this library may satisfy any other requirements, that does not alter the API of the type. Whether or not a type satisfies these additional requirements is unspecified. 
+
+_Note - This implies that, for example, the value of `std::is_standard_layout_t<T>`, where `T` is a type in this library that is not defined to be a_ Standard-layout type _is not part of the API, and any particular value cannot be relied upon by users of the API - End Note_
+
+Any type in this library which does not have an destructor which is explicitly defined as deleted satsifies the requirements of *Destructible*. _Note - The destructor of all types in this library is `noexcept(true)` - End Note_
+Any type in this library that defines a copy constructor, move constructor, copy assignment, or move assignment operator, except as deleted, satisfies *CopyConstructible*, *MoveConstructible*, *CopyAssignable*, and *MoveAssignable*, respectively. _Note - this implies that no type in this library defines a Copy Constructor or Copy Assignment operator that takes only `T&` - End Note_
+
+
+
 

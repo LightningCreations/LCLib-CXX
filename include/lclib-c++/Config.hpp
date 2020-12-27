@@ -33,11 +33,11 @@
 #define LCLIB_CXX_DLL_EXPORT __declspec(dllexport)
 #define LCLIB_CXX_DLL_IMPORT __declspec(dllimport)
 #endif
-#if defined(__GNUC__)||defined(__clang__)||defined(_LCCC_CXX)
+#if defined(__GNUC__)||defined(__clang__)||defined(__lccc__)
 #define LCLIB_CXX_HAS_GNU
 #define LCLIB_CXX_UNREACHABLE() __builtin_unreachable()
 #define LCLIB_CXX_WARN(...) LCLIB_CXX_PRAGMA(message(#__VA_ARGS__))
-#if defined(_LCCC_CXX)
+#if defined(__lccc__)
 #define LCLIB_CXX_HAS_LCEXT
 #endif
 #ifndef LCLIB_CXX_DLL_EXPORT
@@ -83,6 +83,10 @@ LCLIB_CXX_WARN(C++ Compiler Version checks are not supported on MSVC, Things may
 #if __has_include(<compare>)
 #define LCLIB_CXX_HAS_20_SPACESHIP
 #endif
+#endif
+
+#if !defined(LCLIB_CXX_DEBUG)&&!defined(NDEBUG)
+#define LCLIB_CXX_DEBUG
 #endif
 
 #ifdef LCLIB_CXX_DEBUG

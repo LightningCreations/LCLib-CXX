@@ -14,6 +14,7 @@
 
 #include <lclib-c++/TypeTraits.hpp>
 
+#include <lclib-c++/bits/Helpers.hpp>
 
 
 namespace lclib::polymorphic{
@@ -146,7 +147,14 @@ namespace lclib::polymorphic{
             bool instanceof()const noexcept{
                 return m_ptr; //Short circuit out a potentially expensive upcast to virtual base.
             }
+
+        friend void swap(PolymorphicWrapper<T>& pw1,PolymorphicWrapper<T>& pw2)noexcept(_detail::customization::adl_and_std::swap(pw1.m_ptr,pw2.m_ptr)){
+            _detail::customization::adl_and_std::swap(pw1.m_ptr,pw2.m_ptr);
+        }
+        
     };
+
+    
 
     template<typename T> PolymorphicWrapper(const T&)->PolymorphicWrapper<T>;
     template<typename T> PolymorphicWrapper(T&&)->PolymorphicWrapper<T>;

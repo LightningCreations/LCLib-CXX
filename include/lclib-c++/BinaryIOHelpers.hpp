@@ -41,29 +41,29 @@ namespace lclib::io{
         static_assert(type_traits::is_detected<detect_write_to,Size>::value);
         Base underlying;
 
-        decltype(auto) begin(){
+        inline decltype(auto) begin(){
             using std::begin;
             return begin(underlying);
         }
-        decltype(auto) end(){
+        inline decltype(auto) end(){
             using std::end;
             return end(underlying);
         }
 
-        decltype(auto) begin()const{
+        inline decltype(auto) begin()const{
             using std::begin;
             return begin(underlying);
         }
-        decltype(auto) end()const{
+        inline decltype(auto) end()const{
             using std::end;
             return end(underlying);
         }
 
-        decltype(auto) cbegin()const{
+        inline decltype(auto) cbegin()const{
             using std::cbegin;
             return cbegin(underlying);
         }
-        decltype(auto) cend()const{
+        inline decltype(auto) cend()const{
             using std::cend;
             return cend(underlying);
         }
@@ -94,7 +94,7 @@ namespace lclib::io{
     namespace _detail{
         template<typename Tuple,std::size_t... Ns>
         void read_into(DataInputStream& in,Tuple&& tuple,std::index_sequence<Ns...>){
-            (((void)(in >> std::get<Ns>(tuple))), ...,(void)0);
+            (((void)(in >> std::get<Ns>(tuple))), ...);
         }
     }
     template<typename T, typename U,decltype((std::declval<DataInputStream&>() >> std::declval<T&>),(std::declval<DataInputStream&>() >> std::declval<U&>()))* =nullptr>

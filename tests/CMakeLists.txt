@@ -13,5 +13,14 @@ function(add_compile_test name)
             )
 endfunction()
 
+function(add_unit_test name)
+    add_executable(${name} ${name}.cpp)
+    target_link_libraries(${name} PRIVATE)
+    add_test(NAME ${name}
+        COMMAND ${name}
+    )
+endfunction()
+
 add_subdirectory(version)
 add_subdirectory(type_traits)
+add_subdirectory(dynamic_array)

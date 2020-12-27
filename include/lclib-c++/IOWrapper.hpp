@@ -14,7 +14,6 @@
 #include <lclib-c++/TypeTraits.hpp>
 #include <array>
 #include <cstring>
-#include <variant>
 
 
 
@@ -131,7 +130,7 @@ namespace lclib::io{
         virtual void write(std::uint8_t)=0;
         [[nodiscard]] virtual bool check_error()const noexcept =0;
         virtual void clear_error()noexcept=0;
-        explicit operator bool()const noexcept;
+        operator bool()const noexcept;
         bool operator!()const noexcept;
         virtual void flush();
         template<typename Byte,std::size_t N,typename=std::enable_if_t<lclib::type_traits::is_byte_v<Byte>>>
@@ -219,66 +218,53 @@ namespace lclib::io{
                 T val;
                 *this >> val;
                 return std::move(val);
-            }
+            };
 
-        template<typename T,std::enable_if_t<!std::is_array_v<T>&&(std::is_integral_v<T>||std::is_enum_v<T>||std::is_floating_point_v<T>)>* =nullptr>
-            friend DataInputStream& operator>>(DataInputStream& in,T& t){
+        template<typename T,std::enable_if_t<std::is_integral_v<T>||std::is_enum_v<T>||(std::is_floating_point_v<T>&&std::numeric_limits<T>::is_iec559)>* =nullptr>
+            DataInputStream& operator>>(T& t){
                 if constexpr(std::is_same_v<T,bool>){
-                    auto v{in.readSingle()};
+                    auto v{this->readSingle()};
                     if(v>1)
                         throw IOException{"Invalid bool value"};
                     t = bool(v);
                 }else if constexpr(sizeof(T)==1/* && !std::is_same_v<T,bool> */){
-                    reinterpret_cast<uint8_t&>(t) = in.readSingle();
+                    reinterpret_cast<uint8_t&>(t) = this->readSingle();
                 }else{
                     std::byte storage[sizeof(T)];
-                    in.readFully(&storage,sizeof(T));
-                    if(in.byteorder!=endianness::native)
+                    this->readFully(&storage,sizeof(T));
+                    if(this->byteorder!=endianness::native)
                         swap_bytes(storage);
                     memcpy(&t,&storage,sizeof(T));
                 }
-                return in;
+                return *this;
             }
 
-        template<typename T,std::size_t N,std::void_t<decltype(std::declval<DataInputStream&>() >> std::declval<T&>())>* =nullptr>
-           friend DataInputStream& operator>>(DataInputStream& in,T(&arr)[N]){
+        template<typename T,std::size_t N,decltype(std::declval<DataInputStream&>() >> std::declval<T&>())* =nullptr>
+            DataInputStream& operator>>(T(&arr)[N]){
                if constexpr(sizeof(T)==1&&std::is_trivially_copyable_v<T>){
-                   in.readFully(&arr,N);
+                   this->readFully(&arr,N);
                }else{
                    for(T& t:arr)
-                       in >> arr;
+                       (*this) >> arr;
                }
-               return in;
+               return *this;
            }
 
-
-
         template<typename CharTraits,typename Allocator>
-            friend DataInputStream& operator>>(DataInputStream& in,std::basic_string<char,CharTraits,Allocator>& str){
-                auto size{in.read<uint16_t>()};
+            DataInputStream& operator>>(std::basic_string<char,CharTraits,Allocator>& str){
+                auto size{this->read<uint16_t>()};
                 str.resize(size);
-                in.readFully(str.data(),size);
-                return in;
+                this->readFully(str.data(),size);
+                return *this;
             }
-
-#ifdef __cpp_char8_t
-        template<typename CharTraits,typename Allocator>
-        friend DataInputStream& operator>>(DataInputStream& in,std::basic_string<char8_t,CharTraits,Allocator>& str){
-            auto size{in.read<uint16_t>()};
-            str.resize(size);
-            in.readFully(str.data(),size);
-            return in;
-        }
-#endif
     };
 
-    template<typename DataInput,typename T,
-        std::void_t<std::enable_if_t<std::is_same_v<DataInput,DataInputStream>>
-        ,decltype(std::declval<DataInput&>() >> std::declval<T>())>* =nullptr>
-              DataInput&& operator>>(DataInput&& in,T&& val){
-                  return static_cast<DataInput&>(in >> std::forward<T>(val));
-              }
-
+    template<typename DInput,typename T,std::void_t<
+    std::enable_if_t<std::is_same_v<T,DataInputStream>>,
+    decltype(std::declval<DataInputStream&>() >> std::declval<T&>())>* =nullptr>
+        DataInputStream&& operator>>(DInput&& stream,T& val){
+            return static_cast<DataInputStream&&>(stream >> val);
+        }
 
     class DataOutputStream final: public FilterOutputStream{
     private:
@@ -287,41 +273,43 @@ namespace lclib::io{
         DataOutputStream(OutputStream& out,endianness byteorder=endianness::big);
         endianness getEndianness()const noexcept;
         void setEndianness(endianness endian)noexcept;
-
-        template<typename T,std::enable_if_t<!std::is_array_v<T>&&(std::is_integral_v<T>||std::is_enum_v<T>||std::is_floating_point_v<T>)>* =nullptr>
-            friend DataOutputStream& operator<<(DataOutputStream& out,const T& val){
+        template<typename T,std::enable_if_t<std::is_integral_v<T>||std::is_enum_v<T>||(std::is_floating_point_v<T>&&std::numeric_limits<T>::is_iec559)>* =nullptr>
+            DataOutputStream& operator<<(const T& val){
                 std::byte storage[sizeof(T)];
                 std::memcpy(&storage,&val,sizeof(T));
-                if(out.byteorder!=endianness::native)
+                if(this->byteorder!=endianness::native)
                     swap_bytes(storage);
-                out.write_bytes(storage);
-                return out;
-            }
-        template<typename T,std::size_t N,std::void_t<decltype(std::declval<DataOutputStream&>() << std::declval<const T&>())>* =nullptr>
-            friend DataOutputStream& operator<<(DataOutputStream& out,const T(&arr)[N]){
-                for(const auto& val:arr)
-                    out << val;
-                return out;
+                this->write_bytes(storage);
+                return *this;
             }
         template<typename CharTraits,typename Allocator>
-            friend DataOutputStream& operator<<(DataOutputStream& out,const std::basic_string<char,CharTraits,Allocator>& str){
+            DataOutputStream& operator<<(const std::basic_string<char,CharTraits,Allocator>& str){
                 auto len{str.size()};
                 if(len>std::numeric_limits<uint16_t>::max())
                     len = std::numeric_limits<uint16_t>::max();
-                (out << (uint16_t)len);
-                out.write(str.data(),len);
-                return out;
+                ((*this) << (uint16_t)len);
+                this->write(str.data(),len);
+                return *this;
+            }
+
+        template<typename T,std::size_t N,decltype(std::declval<DataOutputStream&>()<<std::declval<const T&>())* =nullptr>
+            DataOutputStream& operator<<(const T(&arr)[N]){
+                if constexpr(std::is_trivially_copyable_v<T>&&sizeof(T)==1)
+                    this->write(&arr,N);
+                else{
+                    for(const T& t:arr)
+                        (*this) << t;
+                }
+                return *this;
             }
     };
-
-
-
-    template<typename DataOutput,typename T,std::void_t<
-        std::enable_if_t<std::is_same_v<DataOutput,DataOutputStream>>,
-        decltype(std::declval<DataOutput&>() << std::declval<T>())>* =nullptr>
-        DataOutput&& operator<<(DataOutput&& out,T&& val){
-            return static_cast<DataOutput&&>(out << std::forward<T>(val));
+    template<typename DOutput,typename T,
+        std::void_t<std::enable_if_t<std::is_same_v<DOutput,DataOutputStream>>,
+        decltype(std::declval<DataOutputStream&>() << std::declval<const T&>())>* =nullptr>
+        DataOutputStream&& operator<<(DOutput&& out,const T& t){
+            return static_cast<DataOutputStream&&>(out << t);
         }
+    
 }
 
 #endif //LCLIB_IOWRAPPER_HPP

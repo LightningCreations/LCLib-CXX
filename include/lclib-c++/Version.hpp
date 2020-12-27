@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <tuple>
 #include <stdexcept>
+#include <functional>
 
 #ifdef LCLIB_CXX_HAS_20_SPACESHIP
 #include <compare>
@@ -21,48 +22,62 @@ namespace lclib::io{
 
 namespace lclib::version{
     struct Version{
-    private:
-        uint8_t major{};
-        uint8_t minor{};
     public:
-        constexpr Version()noexcept=default;
+        uint8_t _major;
+        uint8_t _minor;
+    public:
+        Version()noexcept=default;
         constexpr Version(uint16_t major,uint8_t minor):
-            major{static_cast<uint8_t>(major-1)},minor{minor}{
+            _major{static_cast<uint8_t>(major-1)},_minor{minor}{
             if(major==0||major>256)throw std::domain_error{"major must be between 1 and 256"};
         }
         constexpr Version(const Version&)noexcept=default;
         constexpr Version& operator=(const Version&)noexcept=default;
         [[nodiscard]] constexpr uint16_t getMajorVersion()const noexcept{
-            return static_cast<uint16_t>(major)+1;
+            return static_cast<uint16_t>(_major)+1;
         }
         [[nodiscard]] constexpr uint8_t getMinorVersion()const noexcept{
-            return minor;
+            return _minor;
         }
 #ifdef LCLIB_CXX_HAS_20_SPACESHIP
         constexpr auto operator<=>(const Version&)const noexcept =default;
         constexpr bool operator==(const Version&)const noexcept = default;
 #else
         constexpr bool operator<(const Version& v)const noexcept{
-            return std::tie(this->major,this->minor)<std::tie(v.major,v.minor);
+            return std::tie(this->_major,this->_minor)<std::tie(v._major,v._minor);
         }
         constexpr bool operator==(const Version& v)const noexcept{
-            return std::tie(this->major,this->minor)==std::tie(v.major,v.minor);
+            return std::tie(this->_major,this->_minor)==std::tie(v._major,v._minor);
         }
         constexpr bool operator!=(const Version& v)const noexcept{
-            return std::tie(this->major,this->minor)!=std::tie(v.major,v.minor);
+            return std::tie(this->_major,this->_minor)!=std::tie(v._major,v._minor);
         }
         constexpr bool operator>(const Version& v)const noexcept{
-            return std::tie(this->major,this->minor)>std::tie(v.major,v.minor);
+            return std::tie(this->_major,this->_minor)>std::tie(v._major,v._minor);
         }
         constexpr bool operator<=(const Version& v)const noexcept{
-            return std::tie(this->major,this->minor)<=std::tie(v.major,v.minor);
+            return std::tie(this->_major,this->_minor)<=std::tie(v._major,v._minor);
         }
         constexpr bool operator>=(const Version& v)const noexcept{
-            return std::tie(this->major,this->minor)>=std::tie(v.major,v.minor);
+            return std::tie(this->_major,this->_minor)>=std::tie(v._major,v._minor);
         }
 #endif
         LCLIB_CXX_API friend io::DataInputStream& operator>>(io::DataInputStream&,Version&);
         LCLIB_CXX_API friend io::DataOutputStream& operator<<(io::DataOutputStream&,const Version&);
+    };
+
+    namespace _detail{
+        const unsigned char seed{};
+    }
+}
+
+namespace std{
+    template<> struct hash<lclib::version::Version>{
+        constexpr hash()=default;
+
+        std::size_t operator()(lclib::version::Version v)const {
+            return std::hash<const unsigned char*>{}(&lclib::version::_detail::seed)^(static_cast<std::size_t>(v._major)*257+v._minor);
+        }
     };
 }
 

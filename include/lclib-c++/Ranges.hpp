@@ -110,9 +110,6 @@ namespace lclib::ranges{
         constexpr explicit numeric_range(std::integral_constant<U,Start>,std::integral_constant<S,End>)
             noexcept(std::is_nothrow_constructible_v<T,U>&&std::is_nothrow_constructible_v<T,S>):start{Start},_end{End}{}
 
-        template<typename U,U End,typename=std::enable_if_t<std::is_constructible_v<T,U>>>
-            constexpr explicit numeric_range(std::make_integer_sequence<U,End>):start{},_end{}{}
-
         iterator begin()const{
             return iterator{start};
         }
