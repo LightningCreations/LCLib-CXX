@@ -6,13 +6,19 @@
 #include <lclib-c++/IOWrapper.hpp>
 
 namespace lclib::version{
-    io::DataInputStream& operator>>(io::DataInputStream& in,Version& v){
-        in >> v.major >> v.minor;
 
+    io::DataInputStream& operator>>(io::DataInputStream& in,Version& v){
+        if constexpr(sizeof(Version)==2)
+            in.read(&v,sizeof(Version));
+        else
+            in >> v.major >> v.minor;
         return in;
     }
     io::DataOutputStream& operator<<(io::DataOutputStream& out,const Version& v){
-        out << v.major << v.minor;
+        if constexpr(sizeof(Version)==2)
+            out.write(&v,2);
+        else
+            out << v.major << v.minor;
 
         return out;
     }
